@@ -32,9 +32,8 @@ RUN apt-get install zlib1g-dev -y
 RUN DEBIAN_FRONTEND=noninteractive apt install -y iproute2 cmake python python-pip build-essential gfortran wget curl
 RUN pip install supervisor awscli
 RUN apt-get install openmpi-bin openmpi-common libopenmpi-dev iputils-ping -y
-ADD hordesat hordesat
 
-ADD mpi-run.sh supervised-scripts/run.sh
+ADD run.sh supervised-scripts/run.sh
 ADD make_combined_hostfile.py supervised-scripts/make_combined_hostfile.py
 RUN chmod 755 supervised-scripts/run.sh
 EXPOSE 22
