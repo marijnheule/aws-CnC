@@ -38,10 +38,13 @@ ADD march_cu/ /CnC/march_cu
 ADD iglucose /CnC/iglucose
 ADD scripts/build.sh /CnC/build.sh
 RUN ./CnC/build.sh
+ADD scripts/par-cube-glucose.sh /CnC/par-cube-glucose.sh
 
 ADD scripts/run.sh supervised-scripts/run.sh
 ADD make_combined_hostfile.py supervised-scripts/make_combined_hostfile.py
 RUN chmod 755 supervised-scripts/run.sh
+RUN chmod 755 supervised-scripts/run.sh
 EXPOSE 22
 
-CMD supervised-scripts/run.sh
+#CMD supervised-scripts/run.sh
+CMD /CnC/par-cube-glucose.sh

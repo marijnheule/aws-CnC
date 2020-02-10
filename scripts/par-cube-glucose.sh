@@ -1,6 +1,8 @@
-CNF=$1
+aws s3 cp s3://${S3_BKT}/${COMP_S3_PROBLEM_PATH} /CnC/formula.cnf
+
+CNF=/CnC/formula.cnf
 PAR=4
-DIR=~/CnC/
+DIR=/CnC/
 OUT=/tmp
 
 rm $OUT/output*.txt
