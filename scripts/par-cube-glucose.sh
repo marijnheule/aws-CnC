@@ -1,7 +1,7 @@
 aws s3 cp s3://${S3_BKT}/${COMP_S3_PROBLEM_PATH} /CnC/formula.cnf
 
 CNF=/CnC/formula.cnf
-PAR=4
+PAR=${NUM_PROCESSES}
 DIR=/CnC/
 OUT=/tmp
 
