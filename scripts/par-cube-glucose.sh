@@ -5,6 +5,8 @@ PAR=${NUM_PROCESSES}
 DIR=/CnC/
 OUT=/tmp
 
+echo $PAR
+
 rm $OUT/output*.txt
 $DIR/march_cu/march_cu $CNF -o $OUT/cubes$$ -d 15
 # $DIR/march_cu/march_cu $CNF -o $OUT/cubes$$ $2 $3 $4 $5 $6 $7 $8 $9
