@@ -33,7 +33,13 @@ RUN DEBIAN_FRONTEND=noninteractive apt install -y iproute2 cmake python python-p
 RUN pip install supervisor awscli
 RUN apt-get install openmpi-bin openmpi-common libopenmpi-dev iputils-ping -y
 
-ADD run.sh supervised-scripts/run.sh
+RUN mkdir /CnC
+ADD march_cu/ /CnC/march_cu
+ADD iglucose /CnC/iglucose
+ADD scripts/build.sh /CnC/build.sh
+RUN ./CnC/build.sh
+
+ADD scripts/run.sh supervised-scripts/run.sh
 ADD make_combined_hostfile.py supervised-scripts/make_combined_hostfile.py
 RUN chmod 755 supervised-scripts/run.sh
 EXPOSE 22
