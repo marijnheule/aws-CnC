@@ -4,7 +4,7 @@ if [ -z "$1" ]
 then
   CNF=/CnC/formula.cnf
   aws s3 cp s3://${S3_BKT}/${COMP_S3_PROBLEM_PATH} $CNF
-  DIR=/CnC/
+  DIR=/CnC
 else
   CNF=$1
   DIR=.
