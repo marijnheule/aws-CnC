@@ -25,7 +25,7 @@ echo $PAR
 rm -f $OUT/output*.txt
 touch $OUT/output.txt
 
-$DIR/march_cu/march_cu $CNF -o $OUT/cubes$$ -d 20
+$DIR/march_cu/march_cu $CNF -o $OUT/cubes$$ -d 15
 # $DIR/march_cu/march_cu $CNF -o $OUT/cubes$$ $2 $3 $4 $5 $6 $7 $8 $9
 
 OLD=-1
@@ -35,11 +35,11 @@ do
 #  cat $OUT/output*.txt | grep "SAT" | awk '{print $1}' | sort | uniq -c | tr "\n" "\t";
    
   SAT=`cat $OUT/output*.txt | grep "^SAT" | awk '{print $1}' | uniq`
-  if [ "$SAT" == "SAT" ]; then echo "ONE JOB SAT"; pkill -TERM -P $$; FLAG=0; fi
+  if [ "$SAT" == "SAT" ]; then echo "c DONE: ONE JOB SAT"; pkill -TERM -P $$; FLAG=0; fi
 
   UNSAT=`cat $OUT/output*.txt | grep "^UNSAT" | wc |awk '{print $1}'`
-  if [ "$OLD" -ne "$UNSAT" ]; then echo $UNSAT $PAR; OLD=$UNSAT; fi
-  if [ "$UNSAT" == "$PAR" ]; then echo "c ALL JOBS UNSAT"; pkill -TERM -P $$; FLAG=0; break; fi
+  if [ "$OLD" -ne "$UNSAT" ]; then echo; echo "c progress: "$UNSAT" UNSAT out of "$PAR; OLD=$UNSAT; fi
+  if [ "$UNSAT" == "$PAR" ]; then echo "c DONE: ALL JOBS UNSAT"; pkill -TERM -P $$; FLAG=0; break; fi
   ALIVE=`ps $$ | wc | awk '{print $1}'`
   if [ "$ALIVE" == "1" ]; then echo "c PARENT TERMINATED"; pkill -TERM -P $$; FLAG=0; break; fi 
   if [ "$FLAG"  == "1" ]; then sleep 1; fi
