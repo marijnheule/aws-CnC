@@ -22,7 +22,7 @@ echo $PAR
 
 /usr/sbin/sshd -D &
 
-rm $OUT/output*.txt
+rm -f $OUT/output*.txt
 touch $OUT/output.txt
 
 $DIR/march_cu/march_cu $CNF -o $OUT/cubes$$ -d 15
