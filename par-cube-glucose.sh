@@ -19,6 +19,8 @@ if [ -z "$PAR" ]; then PAR=4; fi
 echo $PAR
 
 rm $OUT/output*.txt
+touch $OUT/output.txt
+
 $DIR/march_cu/march_cu $CNF -o $OUT/cubes$$ -d 15
 # $DIR/march_cu/march_cu $CNF -o $OUT/cubes$$ $2 $3 $4 $5 $6 $7 $8 $9
 
