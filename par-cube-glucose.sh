@@ -1,12 +1,20 @@
 #!/bin/bash
 /usr/sbin/sshd -D &
 
-aws s3 cp s3://${S3_BKT}/${COMP_S3_PROBLEM_PATH} /CnC/formula.cnf
+if [ -z "$1" ]
+then
+  CNF=/CnC/formula.cnf
+  aws s3 cp s3://${S3_BKT}/${COMP_S3_PROBLEM_PATH} $CNF
+  DIR=/CnC/
+else
+  CNF=$1
+  DIR=.
+fi
 
-CNF=/CnC/formula.cnf
 PAR=${NUM_PROCESSES}
-DIR=/CnC/
 OUT=/tmp
+
+if [ -z "$PAR" ]; then PAR=4; fi
 
 echo $PAR
 
@@ -29,7 +37,7 @@ do
   fi
 
   UNSAT=`cat $OUT/output*.txt | grep "^UNSAT" | wc |awk '{print $1}'`
-  if [ "OLD" < "UNSAT" ]; then echo $UNSAT $PAR; OLD=$UNSAT; fi
+  if [ "$OLD" -ne "$UNSAT" ]; then echo $UNSAT $PAR; OLD=$UNSAT; fi
   if [ "$UNSAT" == "$PAR" ]; then echo "c ALL JOBS UNSAT"; FLAG=0; break; fi
   ALIVE=`ps $$ | wc | awk '{print $1}'`
   if [ "$ALIVE" == "1" ]; then echo "c PARENT TERMINATED"; FLAG=0; break; fi 
