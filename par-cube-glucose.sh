@@ -36,7 +36,7 @@ fi
 
 # wait for all nodes to report
 wait_for_nodes () {
-  log "Running as master node"
+  log "c running as master node"
 
   touch $HOST_FILE_PATH
   IP=$(/sbin/ip -o -4 addr list eth0 | awk '{print $4}' | cut -d/ -f1)
@@ -101,12 +101,12 @@ case $NODE_TYPE in
     ;;
 esac
 
+ls /CnC/cubes-split-*
 while [ ! -f /CnC/cubes-split-${AWS_BATCH_JOB_NODE_INDEX}.txt ]
 do
-  echo "Waiting for cube file to appear"
-  ls ~
+  echo "c waiting for cube file to appear, sleep 1 second"
+  sleep 1
 done
-ls ~
 echo "Okay lets run!"
 
 chmod 644 /CnC/cubes-split-${AWS_BATCH_JOB_NODE_INDEX}.txt

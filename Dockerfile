@@ -40,10 +40,7 @@ ADD build.sh /CnC/build.sh
 RUN ./CnC/build.sh /CnC
 ADD par-cube-glucose.sh /CnC/par-cube-glucose.sh
 
-#ADD scripts/run.sh supervised-scripts/run.sh
 ADD scripts/make_combined_hostfile.py /CnC/make_combined_hostfile.py
-#RUN chmod 755 supervised-scripts/run.sh
 EXPOSE 22
 
-#CMD supervised-scripts/run.sh
 CMD /CnC/par-cube-glucose.sh
