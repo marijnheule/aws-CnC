@@ -13,14 +13,98 @@ fi
 # check if input file exists, otherwise terminate
 if [ ! -f "$CNF" ]; then echo "c ERROR formula does not exit"; exit 1; fi
 
+
 PAR=${NUM_PROCESSES}
 OUT=/tmp
 
 if [ -z "$PAR" ]; then PAR=4; fi
 
-echo $PAR
+echo "c running "$PAR" threads" 
+
+log () {
+  echo "${BASENAME} - ${1}"
+}
+HOST_FILE_PATH="/tmp/hostfile"
+
+# set child by default switch to main if on main node container
+NODE_TYPE="child"
+if [ "${AWS_BATCH_JOB_MAIN_NODE_INDEX}" == "${AWS_BATCH_JOB_NODE_INDEX}" ]; then
+  log "c running synchronize as the main node"
+  NODE_TYPE="main"
+fi
 
 /usr/sbin/sshd -D &
+
+# wait for all nodes to report
+wait_for_nodes () {
+  log "Running as master node"
+
+  touch $HOST_FILE_PATH
+  IP=$(/sbin/ip -o -4 addr list eth0 | awk '{print $4}' | cut -d/ -f1)
+
+  MAXCORES=$(nproc)
+  log "c master details -> $IP:$MAXCORES"
+  echo "$IP slots=$MAXCORES" >> $HOST_FILE_PATH
+  LINES=$(ls -dq /tmp/hostfile* | wc -l)
+  while [ "${AWS_BATCH_JOB_NUM_NODES}" -gt "${LINES}" ]
+  do
+    cat $HOST_FILE_PATH
+    LINES=$(ls -dq /tmp/hostfile* | wc -l)
+
+    log "c $LINES out of $AWS_BATCH_JOB_NUM_NODES nodes joined, check again in 1 second"
+    sleep 1
+  done
+
+  python supervised-scripts/make_combined_hostfile.py ${IP}
+  $DIR/march_cu/march_cu $CNF -o $OUT/cubes-$$.txt -d 10
+
+  for (( NODE=0; NODE<${AWS_BATCH_JOB_NUM_NODES}; NODE++ ))
+  do
+    awk 'NR % '${AWS_BATCH_JOB_NUM_NODES}' == '$NODE'' $OUT/cubes-$$.txt > $OUT/cubes-split-$NODE.txt
+    $OUT/cubes-split-$NODE.txt
+    LINE_NUM=$(($NODE + 1))
+    NODE_IP=$(cat combined_hostfile | head -n $LINE_NUM | tail -n 1)
+    echo $NODE_IP
+    scp $OUT/cubes-split-$NODE.txt $NODE_IP:/CnC/cubes-split-$NODE.txt
+  done
+}
+
+report_to_master () {
+  IP=$(/sbin/ip -o -4 addr list eth0 | awk '{print $4}' | cut -d/ -f1)
+
+  MAXCORES=$(nproc)
+
+  log "c I am a child node -> $IP:$MAXCORES, reporting to the master node -> ${AWS_BATCH_JOB_MAIN_NODE_PRIVATE_IPV4_ADDRESS}"
+
+  echo "$IP slots=$MAXCORES" >> $HOST_FILE_PATH${AWS_BATCH_JOB_NODE_INDEX}
+  ping -c 3 ${AWS_BATCH_JOB_MAIN_NODE_PRIVATE_IPV4_ADDRESS}
+  until scp $HOST_FILE_PATH${AWS_BATCH_JOB_NODE_INDEX} ${AWS_BATCH_JOB_MAIN_NODE_PRIVATE_IPV4_ADDRESS}:$HOST_FILE_PATH${AWS_BATCH_JOB_NODE_INDEX}
+  do
+    echo "Sleeping 5 seconds and trying again"
+  done
+  log "c done! goodbye"
+  ps -ef | grep sshd
+}
+
+log $NODE_TYPE
+case $NODE_TYPE in
+  main)
+    wait_for_nodes "${@}"
+    ;;
+
+  child)
+    report_to_master "${@}"
+    ;;
+
+  *)
+    log $NODE_TYPE
+    usage "c ERROR: could not determine node type. Expected (main/child)"
+    ;;
+esac
+
+cat /CnC/cubes-split-${AWS_BATCH_JOB_NODE_INDEX}.txt
+
+exit 2
 
 rm -f $OUT/output*.txt
 touch $OUT/output.txt
