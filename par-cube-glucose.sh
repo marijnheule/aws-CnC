@@ -105,7 +105,7 @@ esac
 chmod 644 /CnC/cubes-split-${AWS_BATCH_JOB_NODE_INDEX}.txt
 cat /CnC/cubes-split-${AWS_BATCH_JOB_NODE_INDEX}.txt
 
-exit 2
+#exit 2
 
 rm -f $OUT/output*.txt
 touch $OUT/output.txt
