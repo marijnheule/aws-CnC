@@ -63,7 +63,7 @@ wait_for_nodes () {
     cat $OUT/cubes-split-$NODE.txt
     LINE_NUM=$(($NODE + 1))
     NODE_IP=$(cat combined_hostfile | head -n $LINE_NUM | tail -n 1 | awk '{print $1}')
-    echo $NODE_IP
+    echo "c copying cubes-split-"$NODE".txt" to "$NODE_IP
     scp $OUT/cubes-split-$NODE.txt $NODE_IP:/CnC/cubes-split-$NODE.txt
   done
 }
@@ -102,9 +102,9 @@ case $NODE_TYPE in
     ;;
 esac
 
-ls /CnC/cubes-split-*
 while [ ! -f /CnC/cubes-split-${AWS_BATCH_JOB_NODE_INDEX}.txt ]
 do
+  ls /CnC/cubes-split-*
   echo "c waiting for cube file to appear, sleep 1 second"
   sleep 1
 done
