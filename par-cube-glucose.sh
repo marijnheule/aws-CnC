@@ -61,9 +61,9 @@ wait_for_nodes () {
   do
     awk 'NR % '${AWS_BATCH_JOB_NUM_NODES}' == '$NODE'' $OUT/cubes-$$.txt > $OUT/cubes-split-$NODE.txt
     cat $OUT/cubes-split-$NODE.txt
-    LINE_NUM=$(($NODE + 1))
-    NODE_IP=$(cat combined_hostfile | head -n $LINE_NUM | tail -n 1 | awk '{print $1}')
-    echo "c copying cubes-split-"$NODE".txt" to "$NODE_IP
+    LINE=$(($NODE + 1))
+    NODE_IP=$(cat combined_hostfile | head -n $LINE | tail -n 1 | awk '{print $1}')
+    echo "c copying cubes-split-"$NODE".txt to "$NODE_IP" "$LINE
     scp $OUT/cubes-split-$NODE.txt $NODE_IP:/CnC/cubes-split-$NODE.txt
   done
 }
