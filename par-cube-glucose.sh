@@ -13,7 +13,6 @@ fi
 # check if input file exists, otherwise terminate
 if [ ! -f "$CNF" ]; then echo "c ERROR formula does not exit"; exit 1; fi
 
-
 PAR=${NUM_PROCESSES}
 OUT=/tmp
 
@@ -26,7 +25,7 @@ log () {
 }
 HOST_FILE_PATH="/tmp/hostfile"
 
-# set child by default switch to main if on main node container
+# set child by default and switch to main if on main node container
 NODE_TYPE="child"
 if [ "${AWS_BATCH_JOB_MAIN_NODE_INDEX}" == "${AWS_BATCH_JOB_NODE_INDEX}" ]; then
   log "c running synchronize as the main node"
@@ -55,7 +54,7 @@ wait_for_nodes () {
     sleep 1
   done
 
-  python supervised-scripts/make_combined_hostfile.py ${IP}
+  python /CnC/make_combined_hostfile.py ${IP}
   $DIR/march_cu/march_cu $CNF -o $OUT/cubes-$$.txt -d 10
 
   for (( NODE=0; NODE<${AWS_BATCH_JOB_NUM_NODES}; NODE++ ))
@@ -101,6 +100,14 @@ case $NODE_TYPE in
     usage "c ERROR: could not determine node type. Expected (main/child)"
     ;;
 esac
+
+while [ ! -f /CnC/cubes-split-${AWS_BATCH_JOB_NODE_INDEX}.txt ]
+do
+  echo "Waiting for cube file to appear"
+  ls ~
+done
+ls ~
+echo "Okay lets run!"
 
 chmod 644 /CnC/cubes-split-${AWS_BATCH_JOB_NODE_INDEX}.txt
 cat /CnC/cubes-split-${AWS_BATCH_JOB_NODE_INDEX}.txt
