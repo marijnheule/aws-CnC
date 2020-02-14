@@ -41,8 +41,7 @@ RUN ./CnC/build.sh /CnC
 ADD par-cube-glucose.sh /CnC/par-cube-glucose.sh
 
 ADD scripts/run.sh supervised-scripts/run.sh
-ADD make_combined_hostfile.py supervised-scripts/make_combined_hostfile.py
-RUN chmod 755 supervised-scripts/run.sh
+ADD scripts/make_combined_hostfile.py supervised-scripts/make_combined_hostfile.py
 RUN chmod 755 supervised-scripts/run.sh
 EXPOSE 22
 
