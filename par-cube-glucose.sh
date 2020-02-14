@@ -102,6 +102,7 @@ case $NODE_TYPE in
     ;;
 esac
 
+chmod 644 /CnC/cubes-split-${AWS_BATCH_JOB_NODE_INDEX}.txt
 cat /CnC/cubes-split-${AWS_BATCH_JOB_NODE_INDEX}.txt
 
 exit 2
