@@ -79,7 +79,8 @@ report_to_master () {
   ping -c 3 ${AWS_BATCH_JOB_MAIN_NODE_PRIVATE_IPV4_ADDRESS}
   until scp $HOST_FILE_PATH${AWS_BATCH_JOB_NODE_INDEX} ${AWS_BATCH_JOB_MAIN_NODE_PRIVATE_IPV4_ADDRESS}:$HOST_FILE_PATH${AWS_BATCH_JOB_NODE_INDEX}
   do
-    echo "Sleeping 5 seconds and trying again"
+    echo "c sleeping 5 seconds and trying again"
+    sleep 5
   done
   log "c done! goodbye"
   ps -ef | grep sshd
