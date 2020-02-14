@@ -55,7 +55,7 @@ wait_for_nodes () {
   done
 
   python /CnC/make_combined_hostfile.py ${IP}
-  $DIR/march_cu/march_cu $CNF -o $OUT/cubes-$$.txt -d 10
+  $DIR/march_cu/march_cu $CNF -o $OUT/cubes-$$.txt -d 10 -l ${AWS_BATCH_JOB_NUM_NODES}
 
   for (( NODE=0; NODE<${AWS_BATCH_JOB_NUM_NODES}; NODE++ ))
   do
