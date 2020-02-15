@@ -34,13 +34,14 @@ RUN pip install supervisor awscli
 RUN apt-get install openmpi-bin openmpi-common libopenmpi-dev iputils-ping -y
 
 RUN mkdir /CnC
+ADD scripts/ /CnC/scripts
 ADD march_cu/ /CnC/march_cu
-ADD iglucose /CnC/iglucose
+ADD iglucose/ /CnC/iglucose
 ADD build.sh /CnC/build.sh
 RUN ./CnC/build.sh /CnC
 ADD par-cube-glucose.sh /CnC/par-cube-glucose.sh
 
-ADD scripts/make_combined_hostfile.py /CnC/make_combined_hostfile.py
+#ADD scripts/make_combined_hostfile.py /CnC/make_combined_hostfile.py
 EXPOSE 22
 
 CMD /CnC/par-cube-glucose.sh
