@@ -38,23 +38,23 @@ fi
 wait_for_nodes () {
   log "c running as master node"
 
-  touch $HOST_FILE_PATH-0
+  touch $HOST_FILE_PATH
   IP=$(/sbin/ip -o -4 addr list eth0 | awk '{print $4}' | cut -d/ -f1)
 
   MAXCORES=$(nproc)
   log "c master details -> $IP:$MAXCORES"
-  echo "$IP slots=$MAXCORES" >> $HOST_FILE_PATH-0
+  echo "$IP slots=$MAXCORES" >> $HOST_FILE_PATH
   LINES=$(ls -dq /tmp/hostfile* | wc -l)
   while [ "${AWS_BATCH_JOB_NUM_NODES}" -gt "${LINES}" ]
   do
-    cat $HOST_FILE_PATH-0
+    cat $HOST_FILE_PATH
     LINES=$(ls -dq /tmp/hostfile* | wc -l)
 
     log "c $LINES out of $AWS_BATCH_JOB_NUM_NODES nodes joined, check again in 1 second"
     sleep 1
   done
 
-  python /CnC/make_combined_hostfile.py ${IP}
+  #python /CnC/make_combined_hostfile.py ${IP}
   $DIR/march_cu/march_cu $CNF -o $OUT/cubes-$$.txt -d 10 -l ${AWS_BATCH_JOB_NUM_NODES}
 
   for (( NODE=0; NODE<${AWS_BATCH_JOB_NUM_NODES}; NODE++ ))
@@ -76,8 +76,9 @@ report_to_master () {
 
   log "c I am a child node -> $IP:$MAXCORES, reporting to the master node -> ${AWS_BATCH_JOB_MAIN_NODE_PRIVATE_IPV4_ADDRESS}"
 
-  echo "$IP slots=$MAXCORES" >> $HOST_FILE_PATH${AWS_BATCH_JOB_NODE_INDEX}
+  echo "$IP slots=$MAXCORES" >> $HOST_FILE_PATH-${AWS_BATCH_JOB_NODE_INDEX}
   ping -c 3 ${AWS_BATCH_JOB_MAIN_NODE_PRIVATE_IPV4_ADDRESS}
+#  until scp $HOST_FILE_PATH-${AWS_BATCH_JOB_NODE_INDEX} ${AWS_BATCH_JOB_MAIN_NODE_PRIVATE_IPV4_ADDRESS}:$HOST_FILE_PATH-${AWS_BATCH_JOB_NODE_INDEX}
   until scp $HOST_FILE_PATH-${AWS_BATCH_JOB_NODE_INDEX} ${AWS_BATCH_JOB_MAIN_NODE_PRIVATE_IPV4_ADDRESS}:$HOST_FILE_PATH-${AWS_BATCH_JOB_NODE_INDEX}
   do
     echo "c master not reachable yet, sleeping 1 second and trying again"
@@ -113,8 +114,6 @@ echo "Okay lets run!"
 
 chmod 644 /CnC/cubes-split-${AWS_BATCH_JOB_NODE_INDEX}.txt
 cat /CnC/cubes-split-${AWS_BATCH_JOB_NODE_INDEX}.txt
-
-#exit 2
 
 rm -f $OUT/output*.txt
 touch $OUT/output.txt
