@@ -1,5 +1,6 @@
 #!/bin/bash
 
+
 if [ -z "$1" ]
 then
   CNF=/CnC/formula.cnf
@@ -114,8 +115,9 @@ cat /CnC/cubes-split-${AWS_BATCH_JOB_NODE_INDEX}.txt
 rm -f $OUT/output*.txt
 touch $OUT/output.txt
 
-/CnC/scripts/apply.sh $CNF $OUT/cubes-split-${AWS_BATCH_JOB_NODE_INDEX}.txt 1 > /CnC/local.cnf
-$DIR/march_cu/march_cu /CnC/local.cnf -o $OUT/cubes$$ -d 15
+LOCAL_CNF=/CnC/local-formula.cnf
+/CnC/scripts/apply.sh $CNF $OUT/cubes-split-${AWS_BATCH_JOB_NODE_INDEX}.txt 1 > $LOCAL_CNF
+$DIR/march_cu/march_cu $LOCAL_CNF -o $OUT/cubes$$ -d 15
 #$DIR/march_cu/march_cu $CNF -o $OUT/cubes$$ -d 15
 
 OLD=-1
@@ -136,7 +138,7 @@ done &
 for (( CORE=0; CORE<$PAR; CORE++ ))
 do
   echo "p inccnf" > $OUT/formula$$-$CORE.icnf
-  cat $CNF | grep -v c >> $OUT/formula$$-$CORE.icnf
+  cat $LOCAL_CNF | grep -v c >> $OUT/formula$$-$CORE.icnf
   awk 'NR % '$PAR' == '$CORE'' $OUT/cubes$$ >> $OUT/formula$$-$CORE.icnf
   $DIR/iglucose/core/iglucose $OUT/formula$$-$CORE.icnf $OUT/output-$CORE.txt -verb=0 &
 done
