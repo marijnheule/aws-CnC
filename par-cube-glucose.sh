@@ -116,7 +116,7 @@ rm -f $OUT/output*.txt
 touch $OUT/output.txt
 
 LOCAL_CNF=/CnC/local-formula.cnf
-/CnC/scripts/apply.sh $CNF $OUT/cubes-split-${AWS_BATCH_JOB_NODE_INDEX}.txt 1 > $LOCAL_CNF
+/CnC/scripts/apply.sh $CNF /CnC/cubes-split-${AWS_BATCH_JOB_NODE_INDEX}.txt 1 > $LOCAL_CNF
 $DIR/march_cu/march_cu $LOCAL_CNF -o $OUT/cubes$$ -d 15
 #$DIR/march_cu/march_cu $CNF -o $OUT/cubes$$ -d 15
 
