@@ -38,16 +38,16 @@ fi
 wait_for_nodes () {
   log "c running as master node"
 
-  touch $HOST_FILE_PATH
+  touch $HOST_FILE_PATH-0
   IP=$(/sbin/ip -o -4 addr list eth0 | awk '{print $4}' | cut -d/ -f1)
 
   MAXCORES=$(nproc)
   log "c master details -> $IP:$MAXCORES"
-  echo "$IP slots=$MAXCORES" >> $HOST_FILE_PATH
+  echo "$IP slots=$MAXCORES" >> $HOST_FILE_PATH-0
   LINES=$(ls -dq /tmp/hostfile* | wc -l)
   while [ "${AWS_BATCH_JOB_NUM_NODES}" -gt "${LINES}" ]
   do
-    cat $HOST_FILE_PATH
+    cat $HOST_FILE_PATH-0
     LINES=$(ls -dq /tmp/hostfile* | wc -l)
 
     log "c $LINES out of $AWS_BATCH_JOB_NUM_NODES nodes joined, check again in 1 second"
@@ -61,9 +61,10 @@ wait_for_nodes () {
   do
     awk 'NR % '${AWS_BATCH_JOB_NUM_NODES}' == '$NODE'' $OUT/cubes-$$.txt > $OUT/cubes-split-$NODE.txt
     cat $OUT/cubes-split-$NODE.txt
-    LINE=$(($NODE + 1))
-    NODE_IP=$(cat combined_hostfile | head -n $LINE | tail -n 1 | awk '{print $1}')
-    echo "c copying cubes-split-"$NODE".txt to "$NODE_IP" "$LINE
+    #LINE=$(($NODE + 1))
+    #NODE_IP=$(cat combined_hostfile | head -n $LINE | tail -n 1 | awk '{print $1}')
+    NODE_IP=$(cat $HOST_FILE_PATH-$NODE | awk '{print $1}')
+    echo "c copying cubes-split-"$NODE".txt to "$NODE_IP
     scp $OUT/cubes-split-$NODE.txt $NODE_IP:/CnC/cubes-split-$NODE.txt
   done
 }
@@ -77,10 +78,10 @@ report_to_master () {
 
   echo "$IP slots=$MAXCORES" >> $HOST_FILE_PATH${AWS_BATCH_JOB_NODE_INDEX}
   ping -c 3 ${AWS_BATCH_JOB_MAIN_NODE_PRIVATE_IPV4_ADDRESS}
-  until scp $HOST_FILE_PATH${AWS_BATCH_JOB_NODE_INDEX} ${AWS_BATCH_JOB_MAIN_NODE_PRIVATE_IPV4_ADDRESS}:$HOST_FILE_PATH${AWS_BATCH_JOB_NODE_INDEX}
+  until scp $HOST_FILE_PATH-${AWS_BATCH_JOB_NODE_INDEX} ${AWS_BATCH_JOB_MAIN_NODE_PRIVATE_IPV4_ADDRESS}:$HOST_FILE_PATH-${AWS_BATCH_JOB_NODE_INDEX}
   do
-    echo "c sleeping 5 seconds and trying again"
-    sleep 5
+    echo "c master not reachable yet, sleeping 1 second and trying again"
+    sleep 1
   done
   log "c done! goodbye"
   ps -ef | grep sshd
