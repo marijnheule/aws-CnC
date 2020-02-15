@@ -114,15 +114,14 @@ cat /CnC/cubes-split-${AWS_BATCH_JOB_NODE_INDEX}.txt
 rm -f $OUT/output*.txt
 touch $OUT/output.txt
 
-$DIR/march_cu/march_cu $CNF -o $OUT/cubes$$ -d 15
-# $DIR/march_cu/march_cu $CNF -o $OUT/cubes$$ $2 $3 $4 $5 $6 $7 $8 $9
+/CnC/scripts/apply.sh $CNF $OUT/cubes-split-${AWS_BATCH_JOB_NODE_INDEX}.txt 1 > /CnC/local.cnf
+$DIR/march_cu/march_cu /CnC/local.cnf -o $OUT/cubes$$ -d 15
+#$DIR/march_cu/march_cu $CNF -o $OUT/cubes$$ -d 15
 
 OLD=-1
 FLAG=1
 while [ "$FLAG" == "1" ]
 do
-#  cat $OUT/output*.txt | grep "SAT" | awk '{print $1}' | sort | uniq -c | tr "\n" "\t";
-   
   SAT=`cat $OUT/output*.txt | grep "^SAT" | awk '{print $1}' | uniq`
   if [ "$SAT" == "SAT" ]; then echo "c DONE: ONE JOB SAT"; pkill -TERM -P $$; FLAG=0; fi
 
@@ -148,5 +147,9 @@ for (( CORE=0; CORE<$PAR; CORE++ ))
 do
   rm $OUT/formula$$-$CORE.icnf
 done
+
+cat $OUT/output*.txt | grep "SAT" | awk '{print $1}' | sort | uniq -c | tr "\n" "\t" > summary-${AWS_BATCH_JOB_NODE_INDEX}.txt
+cat summary-${AWS_BATCH_JOB_NODE_INDEX}.txt
+scp summary-${AWS_BATCH_JOB_NODE_INDEX}.txt ${AWS_BATCH_JOB_MAIN_NODE_PRIVATE_IPV4_ADDRESS}:summary-${AWS_BATCH_JOB_NODE_INDEX}.txt
 
 log "c finished node "${AWS_BATCH_JOB_NODE_INDEX}
