@@ -1,6 +1,5 @@
 #!/bin/bash
 
-
 if [ -z "$1" ]
 then
   CNF=/CnC/formula.cnf
@@ -33,7 +32,7 @@ if [ "${AWS_BATCH_JOB_MAIN_NODE_INDEX}" == "${AWS_BATCH_JOB_NODE_INDEX}" ]; then
   NODE_TYPE="main"
 fi
 
-/usr/sbin/sshd -D &
+# /usr/sbin/sshd -D &
 
 # wait for all nodes to report
 wait_for_nodes () {
@@ -118,7 +117,6 @@ touch $OUT/output.txt
 LOCAL_CNF=/CnC/local-formula.cnf
 /CnC/scripts/apply.sh $CNF /CnC/cubes-split-${AWS_BATCH_JOB_NODE_INDEX}.txt 1 > $LOCAL_CNF
 $DIR/march_cu/march_cu $LOCAL_CNF -o $OUT/cubes$$ -d 15
-#$DIR/march_cu/march_cu $CNF -o $OUT/cubes$$ -d 15
 
 OLD=-1
 FLAG=1
@@ -150,8 +148,7 @@ do
   rm $OUT/formula$$-$CORE.icnf
 done
 
-cat $OUT/output*.txt | grep "SAT" | awk '{print $1}' | sort | uniq -c | tr "\n" "\t" > summary-${AWS_BATCH_JOB_NODE_INDEX}.txt
+cat $OUT/output*.txt | grep -e "SAT" -e "KILLED" | awk '{print $1}' | sort | uniq -c | tr "\n" "\t" > summary-${AWS_BATCH_JOB_NODE_INDEX}.txt
 cat summary-${AWS_BATCH_JOB_NODE_INDEX}.txt
 scp summary-${AWS_BATCH_JOB_NODE_INDEX}.txt ${AWS_BATCH_JOB_MAIN_NODE_PRIVATE_IPV4_ADDRESS}:summary-${AWS_BATCH_JOB_NODE_INDEX}.txt
-
 log "c finished node "${AWS_BATCH_JOB_NODE_INDEX}
