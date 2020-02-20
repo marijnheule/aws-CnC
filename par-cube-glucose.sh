@@ -156,10 +156,9 @@ do
   rm $OUT/formula$$-$CORE.icnf
 done
 
-cat $OUT/output*.txt | grep -e "SAT" -e "KILLED" | awk '{print $1}' | sort | uniq -c | tr "\n" "\t" > summary-${AWS_BATCH_JOB_NODE_INDEX}.txt
+cat $OUT/output*.txt | grep "SAT" | awk '{print $1}' | sort | uniq -c | tr "\n" "\t" | awk '{print $2" "$1" "$4" "$3}' > summary-${AWS_BATCH_JOB_NODE_INDEX}.txt
 cat summary-${AWS_BATCH_JOB_NODE_INDEX}.txt
 scp summary-${AWS_BATCH_JOB_NODE_INDEX}.txt ${AWS_BATCH_JOB_MAIN_NODE_PRIVATE_IPV4_ADDRESS}:/CnC/summary-${AWS_BATCH_JOB_NODE_INDEX}.txt
-
 
 log "c finished node "${AWS_BATCH_JOB_NODE_INDEX}
 
@@ -171,8 +170,8 @@ wait_for_termination() {
     ls CnC/summary*.txt
     ls CnC/summary*.txt | wc | awk '{print $1}'
     SUM=`ls CnC/summary*.txt | wc | awk '{print $1}'`
-    if [ "$OLD" -ne "$SUM" ]; then echo; echo "c progress: "$UNSAT" UNSAT out of "$PAR; OLD=$UNSAT; fi
-    if [ "$SUM" == "$PAR" ]; then echo "c DONE: ALL NODE TERMINATED"; FLAG=0; break; fi
+    if [ "$OLD" -ne "$SUM" ]; then echo; echo "c progress: "$SUM" out of "${AWS_BATCH_JOB_NUM_NODES}; OLD=$SUM; fi
+    if [ "$SUM" == "${AWS_BATCH_JOB_NUM_NODES}" ]; then echo "c DONE: ALL NODE TERMINATED"; FLAG=0; break; fi
     if [ "$FLAG" == "1" ]; then sleep 1; fi
   done
 }
