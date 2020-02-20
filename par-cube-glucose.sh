@@ -145,6 +145,7 @@ do
   awk 'NR % '$PAR' == '$CORE'' $OUT/cubes$$ >> $OUT/formula$$-$CORE.icnf
   $DIR/iglucose/core/iglucose $OUT/formula$$-$CORE.icnf $OUT/output-$CORE.txt -verb=0 &
   ID=$!
+  echo "ID "$ID
   ARRAY+=( $ID )
 done
 echo $ARRAY
