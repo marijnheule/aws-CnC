@@ -122,6 +122,8 @@ LOCAL_CNF=/CnC/local-formula.cnf
 $DIR/march_cu/march_cu $LOCAL_CNF -o $OUT/cubes$$ -d 10
 
 kill_threads() {
+  log "c killing the remaining open threads";
+  for (( CORE=0; CORE<$PAR; CORE++ )) do echo ${PIDS[$CORE]}; done
   for (( CORE=0; CORE<$PAR; CORE++ )) do kill ${PIDS[$CORE]}; done
 }
 
@@ -161,9 +163,9 @@ do
   rm $OUT/formula$$-$CORE.icnf
 done
 
-cat $OUT/output*.txt | grep "SAT" | awk '{print $1}' | sort | uniq -c | tr "\n" "\t" | awk '{print $2" "$1" "$4" "$3}' > summary-${AWS_BATCH_JOB_NODE_INDEX}.txt
-cat summary-${AWS_BATCH_JOB_NODE_INDEX}.txt
-scp summary-${AWS_BATCH_JOB_NODE_INDEX}.txt ${AWS_BATCH_JOB_MAIN_NODE_PRIVATE_IPV4_ADDRESS}:/CnC/summary-${AWS_BATCH_JOB_NODE_INDEX}.txt
+cat $OUT/output*.txt | grep "SAT" | awk '{print $1}' | sort | uniq -c | tr "\n" "\t" | awk '{print $2" "$1" "$4" "$3}' > /CnC/summary-${AWS_BATCH_JOB_NODE_INDEX}.txt
+cat /CnC/summary-${AWS_BATCH_JOB_NODE_INDEX}.txt
+scp /CnC/summary-${AWS_BATCH_JOB_NODE_INDEX}.txt ${AWS_BATCH_JOB_MAIN_NODE_PRIVATE_IPV4_ADDRESS}:/CnC/summary-${AWS_BATCH_JOB_NODE_INDEX}.txt
 
 log "c finished node "${AWS_BATCH_JOB_NODE_INDEX}
 
