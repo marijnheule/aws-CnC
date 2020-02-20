@@ -34,6 +34,8 @@ fi
 
 /usr/sbin/sshd -D &
 
+ARRAY=( )
+
 # wait for all nodes to report
 wait_for_nodes () {
   log "c running as master node"
@@ -139,7 +141,10 @@ do
   cat $LOCAL_CNF | grep -v c >> $OUT/formula$$-$CORE.icnf
   awk 'NR % '$PAR' == '$CORE'' $OUT/cubes$$ >> $OUT/formula$$-$CORE.icnf
   $DIR/iglucose/core/iglucose $OUT/formula$$-$CORE.icnf $OUT/output-$CORE.txt -verb=0 &
+  ID=$!
+  ARRAY+=( $ID )
 done
+echo $ARRAY
 wait
 
 rm $OUT/cubes$$
