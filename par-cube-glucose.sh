@@ -113,9 +113,9 @@ chmod 644 /CnC/cubes-split-${AWS_BATCH_JOB_NODE_INDEX}.txt
 cat /CnC/cubes-split-${AWS_BATCH_JOB_NODE_INDEX}.txt
 
 rm -f $OUT/output*.txt
-rm -f $OUT/id.txt
+rm -f $OUT/pids.txt
 touch $OUT/output.txt
-touch $OUT/id.txt
+touch $OUT/pids.txt
 touch $OUT/summary.txt
 
 LOCAL_CNF=/CnC/local-formula.cnf
@@ -123,9 +123,8 @@ LOCAL_CNF=/CnC/local-formula.cnf
 $DIR/march_cu/march_cu $LOCAL_CNF -o $OUT/cubes$$ -d 10
 
 kill_threads() {
-  log "c killing the remaining open threads";
-  for (( CORE=0; CORE<$PAR; CORE++ )) do echo ${PIDS[$CORE]}; done
-  for (( CORE=0; CORE<$PAR; CORE++ )) do kill ${PIDS[$CORE]}; done
+  log "c killing the remaining open threads"
+  for ID in `cat $OUT/pids.txt`; do echo $ID; kill -0 $ID; done
 }
 
 OLD=-1
@@ -153,6 +152,7 @@ do
   awk 'NR % '$PAR' == '$CORE'' $OUT/cubes$$ >> $OUT/formula$$-$CORE.icnf
   $DIR/iglucose/core/iglucose $OUT/formula$$-$CORE.icnf $OUT/output-$CORE.txt -verb=0 &
   PIDS[$CORE]=$!
+  echo ${PIDS[$CORE] >> $OUT/pids.txt
 done
 
 # wait for all pids
