@@ -150,6 +150,9 @@ done
 echo $ARRAY
 wait
 
+pkill -TERM -P $$
+/usr/sbin/sshd -D &
+
 rm $OUT/cubes$$
 for (( CORE=0; CORE<$PAR; CORE++ ))
 do
