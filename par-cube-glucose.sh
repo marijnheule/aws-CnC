@@ -127,6 +127,9 @@ do
   SAT=`cat $OUT/output*.txt | grep "^SAT" | awk '{print $1}' | uniq`
   if [ "$SAT" == "SAT" ]; then echo "c DONE: ONE JOB SAT"; pkill -TERM -P $$; FLAG=0; fi
 
+  SAT=`cat CnC/summary*.txt | grep "^SAT" | awk '{print $1}' | uniq`
+  if [ "$SAT" == "SAT" ]; then echo "c DONE: ONE JOB SAT"; pkill -TERM -P $$; FLAG=0; fi
+
   UNSAT=`cat $OUT/output*.txt | grep "^UNSAT" | wc |awk '{print $1}'`
   if [ "$OLD" -ne "$UNSAT" ]; then echo; echo "c progress: "$UNSAT" UNSAT out of "$PAR; OLD=$UNSAT; fi
   if [ "$UNSAT" == "$PAR" ]; then echo "c DONE: ALL JOBS UNSAT"; pkill -TERM -P $$; FLAG=0; break; fi
@@ -165,10 +168,12 @@ wait_for_termination() {
   FLAG=1
   while [ "$FLAG" == "1" ]
   do
-    SUM=`ls CnC/summary*.txt | wc |awk '{print $1}'`
+    ls CnC/summary*.txt
+    ls CnC/summary*.txt | wc | awk '{print $1}'
+    SUM=`ls CnC/summary*.txt | wc | awk '{print $1}'`
     if [ "$OLD" -ne "$SUM" ]; then echo; echo "c progress: "$UNSAT" UNSAT out of "$PAR; OLD=$UNSAT; fi
     if [ "$SUM" == "$PAR" ]; then echo "c DONE: ALL NODE TERMINATED"; FLAG=0; break; fi
-    if [ "$FLAG"  == "1" ]; then sleep 1; fi
+    if [ "$FLAG" == "1" ]; then sleep 1; fi
   done
 }
 
