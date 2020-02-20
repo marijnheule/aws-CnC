@@ -115,14 +115,14 @@ rm -f $OUT/output*.txt
 rm -f $OUT/id.txt
 touch $OUT/output.txt
 touch $OUT/id.txt
+touch $OUT/summary.txt
 
 LOCAL_CNF=/CnC/local-formula.cnf
 /CnC/scripts/apply.sh $CNF /CnC/cubes-split-${AWS_BATCH_JOB_NODE_INDEX}.txt 1 > $LOCAL_CNF
 $DIR/march_cu/march_cu $LOCAL_CNF -o $OUT/cubes$$ -d 10
 
 kill_threads() {
-  for ID in `cat $OUT/id.txt`; do kill $ID; done
-#  for ID in `cat /tmp/id.txt`; do pkill -TERM -P $ID; done
+  for (( CORE=0; CORE<$PAR; CORE++ )) do kill ${PIDS[$CORE]}; done
 }
 
 OLD=-1
@@ -150,12 +150,9 @@ do
   awk 'NR % '$PAR' == '$CORE'' $OUT/cubes$$ >> $OUT/formula$$-$CORE.icnf
   $DIR/iglucose/core/iglucose $OUT/formula$$-$CORE.icnf $OUT/output-$CORE.txt -verb=0 &
   PIDS[$CORE]=$!
-#  ID=$!
-#  echo $ID >> $OUT/id.txt
 done
 
 # wait for all pids
-for (( CORE=0; CORE<$PAR; CORE++ )) do echo ${PIDS[$CORE]}; done
 for (( CORE=0; CORE<$PAR; CORE++ )) do wait ${PIDS[$CORE]}; done
 
 rm $OUT/cubes$$
