@@ -123,7 +123,7 @@ $DIR/march_cu/march_cu $LOCAL_CNF -o $OUT/cubes$$ -d 10
 
 kill_threads() {
   log "c killing the remaining open threads"
-  for ID in `cat $OUT/pids.txt`; do echo $ID; kill -0 $ID; done
+  for ID in `cat $OUT/pids.txt`; do echo $ID; kill $ID; done
 }
 
 OLD=-1
