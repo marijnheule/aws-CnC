@@ -149,10 +149,13 @@ do
   cat $LOCAL_CNF | grep -v c >> $OUT/formula$$-$CORE.icnf
   awk 'NR % '$PAR' == '$CORE'' $OUT/cubes$$ >> $OUT/formula$$-$CORE.icnf
   $DIR/iglucose/core/iglucose $OUT/formula$$-$CORE.icnf $OUT/output-$CORE.txt -verb=0 &
-  ID=$!
-  echo $ID >> $OUT/id.txt
+  PIDS[$CORE]=$!
+#  ID=$!
+#  echo $ID >> $OUT/id.txt
 done
-wait
+
+# wait for all pids
+for (( CORE=0; CORE<$PAR; CORE++ )) do wait $PIDS[$CORE]; done
 
 rm $OUT/cubes$$
 for (( CORE=0; CORE<$PAR; CORE++ ))
