@@ -15,6 +15,7 @@ if [ ! -f "$CNF" ]; then echo "c ERROR formula does not exit"; exit 1; fi
 
 PAR=${NUM_PROCESSES}
 OUT=/tmp
+PIDS=( )
 
 if [ -z "$PAR" ]; then PAR=4; fi
 
@@ -174,13 +175,23 @@ wait_for_termination() {
   FLAG=1
   while [ "$FLAG" == "1" ]
   do
-    ls CnC/summary*.txt
-    ls CnC/summary*.txt | wc | awk '{print $1}'
+    SAT=`cat CnC/summary*.txt | grep "^SAT" | awk '{print $1}' | uniq`
+    if [ "$SAT" == "SAT" ]; then
+      echo "SAT" > sat.txt
+      echo "c ENDING THE OTHER NODES"; FLAG=0;
+      for (( NODE=0; NODE<${AWS_BATCH_JOB_NUM_NODES}; NODE++ ))
+      do
+        NODE_IP=$(cat $HOST_FILE_PATH-$NODE | awk '{print $1}')
+        scp sat.txt $NODE_IP:$OUT/output-X.txt
+      done
+    fi
+
     SUM=`ls CnC/summary*.txt | wc | awk '{print $1}'`
     if [ "$OLD" -ne "$SUM" ]; then echo; echo "c progress: "$SUM" out of "${AWS_BATCH_JOB_NUM_NODES}; OLD=$SUM; fi
     if [ "$SUM" == "${AWS_BATCH_JOB_NUM_NODES}" ]; then echo "c DONE: ALL NODE TERMINATED"; FLAG=0; break; fi
     if [ "$FLAG" == "1" ]; then sleep 1; fi
   done
+  cat CnC/summary-*.txt
 }
 
 case $NODE_TYPE in
