@@ -32,7 +32,7 @@ if [ "${AWS_BATCH_JOB_MAIN_NODE_INDEX}" == "${AWS_BATCH_JOB_NODE_INDEX}" ]; then
   NODE_TYPE="main"
 fi
 
-# /usr/sbin/sshd -D &
+/usr/sbin/sshd -D &
 
 # wait for all nodes to report
 wait_for_nodes () {
@@ -116,7 +116,7 @@ touch $OUT/output.txt
 
 LOCAL_CNF=/CnC/local-formula.cnf
 /CnC/scripts/apply.sh $CNF /CnC/cubes-split-${AWS_BATCH_JOB_NODE_INDEX}.txt 1 > $LOCAL_CNF
-$DIR/march_cu/march_cu $LOCAL_CNF -o $OUT/cubes$$ -d 15
+$DIR/march_cu/march_cu $LOCAL_CNF -o $OUT/cubes$$ -d 10
 
 OLD=-1
 FLAG=1
@@ -151,4 +151,33 @@ done
 cat $OUT/output*.txt | grep -e "SAT" -e "KILLED" | awk '{print $1}' | sort | uniq -c | tr "\n" "\t" > summary-${AWS_BATCH_JOB_NODE_INDEX}.txt
 cat summary-${AWS_BATCH_JOB_NODE_INDEX}.txt
 scp summary-${AWS_BATCH_JOB_NODE_INDEX}.txt ${AWS_BATCH_JOB_MAIN_NODE_PRIVATE_IPV4_ADDRESS}:summary-${AWS_BATCH_JOB_NODE_INDEX}.txt
+
+
 log "c finished node "${AWS_BATCH_JOB_NODE_INDEX}
+
+wait_for_termination() {
+  OLD=-1
+  FLAG=1
+  while [ "$FLAG" == "1" ]
+  do
+    SUM=`ls $OUT/summary*.txt | wc |awk '{print $1}'`
+    if [ "$OLD" -ne "$SUM" ]; then echo; echo "c progress: "$UNSAT" UNSAT out of "$PAR; OLD=$UNSAT; fi
+    if [ "$SUM" == "$PAR" ]; then echo "c DONE: ALL NODE TERMINATED"; FLAG=0; break; fi
+    if [ "$FLAG"  == "1" ]; then sleep 1; fi
+  done
+}
+
+case $NODE_TYPE in
+  main)
+    wait_for_termination "${@}"
+    ;;
+
+  child)
+    log "c finished node "${AWS_BATCH_JOB_NODE_INDEX}
+    ;;
+
+  *)
+    log $NODE_TYPE
+    usage "c ERROR: could not determine node type. Expected (main/child)"
+    ;;
+esac
