@@ -121,7 +121,7 @@ LOCAL_CNF=/CnC/local-formula.cnf
 $DIR/march_cu/march_cu $LOCAL_CNF -o $OUT/cubes$$ -d 10
 
 kill_threads() {
-  for ID in `cat /tmp/id.txt`; do kill $ID; done
+  for ID in `cat $OUT/id.txt`; do kill $ID; done
 #  for ID in `cat /tmp/id.txt`; do pkill -TERM -P $ID; done
 }
 
@@ -130,16 +130,16 @@ FLAG=1
 while [ "$FLAG" == "1" ]
 do
   SAT=`cat $OUT/output*.txt | grep "^SAT" | awk '{print $1}' | uniq`
-  if [ "$SAT" == "SAT" ]; then echo "c DONE: ONE JOB SAT"; kill_threads(); FLAG=0; fi
+  if [ "$SAT" == "SAT" ]; then echo "c DONE: ONE JOB SAT"; kill_threads "${@}"; FLAG=0; fi
 
   SAT=`cat CnC/summary*.txt | grep "^SAT" | awk '{print $1}' | uniq`
-  if [ "$SAT" == "SAT" ]; then echo "c DONE: ONE NODE SAT"; kill_threads(); FLAG=0; fi
+  if [ "$SAT" == "SAT" ]; then echo "c DONE: ONE NODE SAT"; kill_threads "${@}"; FLAG=0; fi
 
   UNSAT=`cat $OUT/output*.txt | grep "^UNSAT" | wc | awk '{print $1}'`
   if [ "$OLD" -ne "$UNSAT" ]; then echo; echo "c progress: "$UNSAT" UNSAT out of "$PAR; OLD=$UNSAT; fi
-  if [ "$UNSAT" == "$PAR" ]; then echo "c DONE: ALL JOBS UNSAT"; kill_threads(); FLAG=0; break; fi
+  if [ "$UNSAT" == "$PAR" ]; then echo "c DONE: ALL JOBS UNSAT"; kill_threads "${@}"; FLAG=0; break; fi
   ALIVE=`ps $$ | wc | awk '{print $1}'`
-  if [ "$ALIVE" == "1" ]; then echo "c PARENT TERMINATED"; kill_threads(); FLAG=0; break; fi
+  if [ "$ALIVE" == "1" ]; then echo "c PARENT TERMINATED"; kill_threads "${@}"; FLAG=0; break; fi
   if [ "$FLAG"  == "1" ]; then sleep 1; fi
 done &
 
