@@ -44,4 +44,5 @@ ADD par-cube-glucose.sh /CnC/par-cube-glucose.sh
 #ADD scripts/make_combined_hostfile.py /CnC/make_combined_hostfile.py
 EXPOSE 22
 
+CMD /usr/sbin/sshd -D &
 CMD /CnC/par-cube-glucose.sh
