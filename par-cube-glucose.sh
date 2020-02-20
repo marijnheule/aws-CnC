@@ -16,6 +16,7 @@ if [ ! -f "$CNF" ]; then echo "c ERROR formula does not exit"; exit 1; fi
 PAR=${NUM_PROCESSES}
 OUT=/tmp
 
+# if PAR not defined, then assume the script runs locally (for testing)
 if [ -z "$PAR" ]; then PAR=4; fi
 
 echo "c running "$PAR" threads"
@@ -54,7 +55,7 @@ wait_for_nodes () {
     sleep 1
   done
 
-  $DIR/march_cu/march_cu $CNF -o $OUT/cubes-$$.txt -d 10 -l ${AWS_BATCH_JOB_NUM_NODES}
+  $DIR/march_cu/march_cu $CNF -o $OUT/cubes-$$.txt -d 15 -l ${AWS_BATCH_JOB_NUM_NODES}
 
   for (( NODE=0; NODE<${AWS_BATCH_JOB_NUM_NODES}; NODE++ ))
   do
