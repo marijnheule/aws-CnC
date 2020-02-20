@@ -18,7 +18,7 @@ OUT=/tmp
 
 if [ -z "$PAR" ]; then PAR=4; fi
 
-echo "c running "$PAR" threads" 
+echo "c running "$PAR" threads"
 
 log () {
   echo "${BASENAME} - ${1}"
@@ -33,8 +33,6 @@ if [ "${AWS_BATCH_JOB_MAIN_NODE_INDEX}" == "${AWS_BATCH_JOB_NODE_INDEX}" ]; then
 fi
 
 /usr/sbin/sshd -D &
-
-ARRAY=( )
 
 # wait for all nodes to report
 wait_for_nodes () {
@@ -123,7 +121,8 @@ LOCAL_CNF=/CnC/local-formula.cnf
 $DIR/march_cu/march_cu $LOCAL_CNF -o $OUT/cubes$$ -d 10
 
 kill_threads() {
-  for ID in `cat /tmp/id.txt`; do pkill -TERM -P $ID; done
+  for ID in `cat /tmp/id.txt`; do kill $ID; done
+#  for ID in `cat /tmp/id.txt`; do pkill -TERM -P $ID; done
 }
 
 OLD=-1
@@ -134,13 +133,13 @@ do
   if [ "$SAT" == "SAT" ]; then echo "c DONE: ONE JOB SAT"; kill_threads(); FLAG=0; fi
 
   SAT=`cat CnC/summary*.txt | grep "^SAT" | awk '{print $1}' | uniq`
-  if [ "$SAT" == "SAT" ]; then echo "c DONE: ONE JOB SAT"; kill_threads(); FLAG=0; fi
+  if [ "$SAT" == "SAT" ]; then echo "c DONE: ONE NODE SAT"; kill_threads(); FLAG=0; fi
 
   UNSAT=`cat $OUT/output*.txt | grep "^UNSAT" | wc | awk '{print $1}'`
   if [ "$OLD" -ne "$UNSAT" ]; then echo; echo "c progress: "$UNSAT" UNSAT out of "$PAR; OLD=$UNSAT; fi
   if [ "$UNSAT" == "$PAR" ]; then echo "c DONE: ALL JOBS UNSAT"; kill_threads(); FLAG=0; break; fi
   ALIVE=`ps $$ | wc | awk '{print $1}'`
-  if [ "$ALIVE" == "1" ]; then echo "c PARENT TERMINATED"; kill_threads(); FLAG=0; break; fi 
+  if [ "$ALIVE" == "1" ]; then echo "c PARENT TERMINATED"; kill_threads(); FLAG=0; break; fi
   if [ "$FLAG"  == "1" ]; then sleep 1; fi
 done &
 
