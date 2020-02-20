@@ -155,6 +155,7 @@ do
 done
 
 # wait for all pids
+for (( CORE=0; CORE<$PAR; CORE++ )) do echo $PIDS[$CORE]; done
 for (( CORE=0; CORE<$PAR; CORE++ )) do wait $PIDS[$CORE]; done
 
 rm $OUT/cubes$$
