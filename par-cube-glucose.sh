@@ -15,7 +15,6 @@ if [ ! -f "$CNF" ]; then echo "c ERROR formula does not exit"; exit 1; fi
 
 PAR=${NUM_PROCESSES}
 OUT=/tmp
-PIDS=( )
 
 if [ -z "$PAR" ]; then PAR=4; fi
 
@@ -152,7 +151,7 @@ do
   awk 'NR % '$PAR' == '$CORE'' $OUT/cubes$$ >> $OUT/formula$$-$CORE.icnf
   $DIR/iglucose/core/iglucose $OUT/formula$$-$CORE.icnf $OUT/output-$CORE.txt -verb=0 &
   PIDS[$CORE]=$!
-  echo ${PIDS[$CORE] >> $OUT/pids.txt
+  echo ${PIDS[$CORE]} >> $OUT/pids.txt
 done
 
 # wait for all pids
