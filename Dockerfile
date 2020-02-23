@@ -37,6 +37,7 @@ RUN mkdir /CnC
 ADD scripts/ /CnC/scripts
 ADD march_cu/ /CnC/march_cu
 ADD iglucose/ /CnC/iglucose
+ADD cadical/ /CnC/cadical
 ADD build.sh /CnC/build.sh
 RUN ./CnC/build.sh /CnC
 ADD par-cube-glucose.sh /CnC/par-cube-glucose.sh
