@@ -1,6 +1,6 @@
 #!/bin/bash
 
-DEPTH=20
+DEPTH=15
 
 if [ -z "$1" ]
 then
