@@ -55,7 +55,8 @@ wait_for_nodes () {
     sleep 1
   done
 
-  $DIR/cadical/build/cadical $CNF -c 100000 -o $OUT/simp.cnf
+  $DIR/cadical/build/cadical $CNF -c 100000 -o $OUT/simp.cnf -q
+  head -n 1 $OUT/simp.cnf
   $DIR/march_cu/march_cu $OUT/simp.cnf -o $OUT/cubes-$$.txt -d 10 -l ${AWS_BATCH_JOB_NUM_NODES}
 
   for (( NODE=0; NODE<${AWS_BATCH_JOB_NUM_NODES}; NODE++ ))
@@ -104,7 +105,7 @@ esac
 
 while [ ! -f /CnC/cubes-split-${AWS_BATCH_JOB_NODE_INDEX}.txt ]
 do
-  ls /CnC/cubes-split-*
+  ls /CnC/cubes-split-* 2> /dev/null
   echo "c waiting for cube file to appear, sleep 1 second"
   sleep 1
 done
@@ -121,7 +122,8 @@ touch CnC/summary.txt
 
 LOCAL_CNF=/CnC/local-formula.cnf
 /CnC/scripts/apply.sh $CNF /CnC/cubes-split-${AWS_BATCH_JOB_NODE_INDEX}.txt 1 > $OUT/cubed.cnf
-$DIR/cadical/build/cadical $OUT/cubed.cnf -c 100000 -o $LOCAL_CNF
+$DIR/cadical/build/cadical $OUT/cubed.cnf -c 100000 -o $LOCAL_CNF -q
+head -n 1 $LOCAL_CNF
 $DIR/march_cu/march_cu $LOCAL_CNF -o $OUT/cubes$$ -d 15
 
 kill_threads() {
@@ -189,7 +191,7 @@ wait_for_termination() {
     fi
 
     SUM=`ls CnC/summary*.txt 2> /dev/null | wc | awk '{print $1}'`
-    if [ "$OLD" -ne "$SUM" ]; then echo; echo "c progress: "$SUM" out of "${AWS_BATCH_JOB_NUM_NODES}; OLD=$SUM; fi
+    if [ "$OLD" -ne "$SUM" ]; then echo; echo "c progress: "$SUM" nodes finished out of "${AWS_BATCH_JOB_NUM_NODES}; OLD=$SUM; fi
     if [ "$SUM" == "${AWS_BATCH_JOB_NUM_NODES}" ]; then echo "c DONE: ALL NODE TERMINATED"; FLAG=0; break; fi
     if [ "$FLAG" == "1" ]; then sleep 1; fi
   done
