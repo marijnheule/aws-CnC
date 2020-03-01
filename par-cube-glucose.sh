@@ -203,7 +203,7 @@ wait_for_termination() {
   done
   for file in CnC/summary-*.txt;
   do
-    echo -n $file" "; cat CnC/summary-*.txt;
+    echo -n $file" "; cat $file;
   done
 }
 
