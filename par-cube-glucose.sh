@@ -147,7 +147,7 @@ do
   if [ "$SAT" == "SAT" ]; then echo "c DONE: ONE NODE SAT"; kill_threads "${@}"; FLAG=0; fi
 
   UNSAT=`cat $OUT/output*.txt | grep "^UNSAT" | wc | awk '{print $1}'`
-  if [ "$OLD" -ne "$UNSAT" ]; then echo; echo "c progress: "$UNSAT" UNSAT out of "$PAR; OLD=$UNSAT; fi
+  if [ "$OLD" -ne "$UNSAT" ]; then echo; echo "c local progress: "$UNSAT" UNSAT out of "$PAR; OLD=$UNSAT; fi
   if [ "$UNSAT" == "$PAR" ]; then echo "c DONE: ALL JOBS UNSAT"; kill_threads "${@}"; FLAG=0; break; fi
   ALIVE=`ps $$ | wc | awk '{print $1}'`
   if [ "$ALIVE" == "1" ]; then echo "c PARENT TERMINATED"; kill_threads "${@}"; FLAG=0; break; fi
@@ -197,7 +197,7 @@ wait_for_termination() {
     fi
 
     SUM=`ls CnC/summary*.txt 2> /dev/null | wc | awk '{print $1}'`
-    if [ "$OLD" -ne "$SUM" ]; then echo; echo "c progress: "$SUM" nodes finished out of "${AWS_BATCH_JOB_NUM_NODES}; OLD=$SUM; fi
+    if [ "$OLD" -ne "$SUM" ]; then echo; echo "c global progress: "$SUM" nodes finished out of "${AWS_BATCH_JOB_NUM_NODES}; OLD=$SUM; fi
     if [ "$SUM" == "${AWS_BATCH_JOB_NUM_NODES}" ]; then echo "c DONE: ALL NODE TERMINATED"; FLAG=0; break; fi
     if [ "$FLAG" == "1" ]; then sleep 1; fi
   done
