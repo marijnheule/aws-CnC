@@ -56,7 +56,7 @@ wait_for_nodes () {
   done
 
   $DIR/cadical/build/cadical $CNF -c 100000 -o $OUT/simp.cnf
-  $DIR/march_cu/march_cu $OUT/simp.cnf -o $OUT/cubes-$$.txt -d 15 -l ${AWS_BATCH_JOB_NUM_NODES}
+  $DIR/march_cu/march_cu $OUT/simp.cnf -o $OUT/cubes-$$.txt -d 10 -l ${AWS_BATCH_JOB_NUM_NODES}
 
   for (( NODE=0; NODE<${AWS_BATCH_JOB_NUM_NODES}; NODE++ ))
   do
@@ -117,16 +117,16 @@ rm -f $OUT/output*.txt
 rm -f $OUT/pids.txt
 touch $OUT/output.txt
 touch $OUT/pids.txt
-touch $OUT/summary.txt
+touch CnC/summary.txt
 
 LOCAL_CNF=/CnC/local-formula.cnf
 /CnC/scripts/apply.sh $CNF /CnC/cubes-split-${AWS_BATCH_JOB_NODE_INDEX}.txt 1 > $OUT/cubed.cnf
 $DIR/cadical/build/cadical $OUT/cubed.cnf -c 100000 -o $LOCAL_CNF
-$DIR/march_cu/march_cu $LOCAL_CNF -o $OUT/cubes$$ -d 10
+$DIR/march_cu/march_cu $LOCAL_CNF -o $OUT/cubes$$ -d 15
 
 kill_threads() {
   log "c killing the remaining open threads"
-  for ID in `cat $OUT/pids.txt`; do echo $ID; kill $ID; done
+  for ID in `cat $OUT/pids.txt`; do echo "c killing thread "$ID; kill $ID 2> /dev/null; done
 }
 
 OLD=-1
