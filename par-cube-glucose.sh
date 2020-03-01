@@ -55,7 +55,8 @@ wait_for_nodes () {
     sleep 1
   done
 
-  $DIR/march_cu/march_cu $CNF -o $OUT/cubes-$$.txt -d 15 -l ${AWS_BATCH_JOB_NUM_NODES}
+  $DIR/cadical/build/cadical $CNF -c 100000 -o $OUT/simp.cnf
+  $DIR/march_cu/march_cu $OUT/simp.cnf -o $OUT/cubes-$$.txt -d 15 -l ${AWS_BATCH_JOB_NUM_NODES}
 
   for (( NODE=0; NODE<${AWS_BATCH_JOB_NUM_NODES}; NODE++ ))
   do
@@ -119,7 +120,8 @@ touch $OUT/pids.txt
 touch $OUT/summary.txt
 
 LOCAL_CNF=/CnC/local-formula.cnf
-/CnC/scripts/apply.sh $CNF /CnC/cubes-split-${AWS_BATCH_JOB_NODE_INDEX}.txt 1 > $LOCAL_CNF
+/CnC/scripts/apply.sh $CNF /CnC/cubes-split-${AWS_BATCH_JOB_NODE_INDEX}.txt 1 > $OUT/cubed.cnf
+$DIR/cadical/build/cadical $OUT/cubed.cnf -c 100000 -o $LOCAL_CNF
 $DIR/march_cu/march_cu $LOCAL_CNF -o $OUT/cubes$$ -d 10
 
 kill_threads() {
@@ -186,7 +188,7 @@ wait_for_termination() {
       done
     fi
 
-    SUM=`ls CnC/summary*.txt | wc | awk '{print $1}'`
+    SUM=`ls CnC/summary*.txt 2> /dev/null | wc | awk '{print $1}'`
     if [ "$OLD" -ne "$SUM" ]; then echo; echo "c progress: "$SUM" out of "${AWS_BATCH_JOB_NUM_NODES}; OLD=$SUM; fi
     if [ "$SUM" == "${AWS_BATCH_JOB_NUM_NODES}" ]; then echo "c DONE: ALL NODE TERMINATED"; FLAG=0; break; fi
     if [ "$FLAG" == "1" ]; then sleep 1; fi
