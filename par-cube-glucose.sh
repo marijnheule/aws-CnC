@@ -1,5 +1,7 @@
 #!/bin/bash
 
+DEPTH=15
+
 if [ -z "$1" ]
 then
   CNF=/CnC/formula.cnf
@@ -45,13 +47,17 @@ wait_for_nodes () {
   MAXCORES=$(nproc)
   log "c master details -> $IP:$MAXCORES"
   echo "$IP slots=$MAXCORES" >> $HOST_FILE_PATH-0
+  OLD=0
   LINES=$(ls -dq /tmp/hostfile* | wc -l)
   while [ "${AWS_BATCH_JOB_NUM_NODES}" -gt "${LINES}" ]
   do
-    cat $HOST_FILE_PATH-0
+#    cat $HOST_FILE_PATH-0
 
     LINES=$(ls -dq /tmp/hostfile* | wc -l)
-    log "c $LINES out of $AWS_BATCH_JOB_NUM_NODES nodes joined, check again in 1 second"
+    if [ "$OLD" -ne "$LINES" ]; then
+      log "c $LINES out of $AWS_BATCH_JOB_NUM_NODES nodes joined";
+      OLD=$LINES;
+    fi
     sleep 1
   done
 
@@ -118,13 +124,12 @@ rm -f $OUT/output*.txt
 rm -f $OUT/pids.txt
 touch $OUT/output.txt
 touch $OUT/pids.txt
-touch CnC/summary.txt
 
 LOCAL_CNF=/CnC/local-formula.cnf
 /CnC/scripts/apply.sh $CNF /CnC/cubes-split-${AWS_BATCH_JOB_NODE_INDEX}.txt 1 > $OUT/cubed.cnf
 $DIR/cadical/build/cadical $OUT/cubed.cnf -c 100000 -o $LOCAL_CNF -q
 head -n 1 $LOCAL_CNF
-$DIR/march_cu/march_cu $LOCAL_CNF -o $OUT/cubes$$ -d 15
+$DIR/march_cu/march_cu $LOCAL_CNF -o $OUT/cubes$$ -d $DEPTH
 
 kill_threads() {
   log "c killing the remaining open threads"
@@ -138,7 +143,7 @@ do
   SAT=`cat $OUT/output*.txt | grep "^SAT" | awk '{print $1}' | uniq`
   if [ "$SAT" == "SAT" ]; then echo "c DONE: ONE JOB SAT"; kill_threads "${@}"; FLAG=0; fi
 
-  SAT=`cat CnC/summary*.txt | grep "^SAT" | awk '{print $1}' | uniq`
+  SAT=`cat CnC/summary*.txt 2> /dev/null | grep "^SAT" | awk '{print $1}' | uniq`
   if [ "$SAT" == "SAT" ]; then echo "c DONE: ONE NODE SAT"; kill_threads "${@}"; FLAG=0; fi
 
   UNSAT=`cat $OUT/output*.txt | grep "^UNSAT" | wc | awk '{print $1}'`
@@ -152,10 +157,11 @@ done &
 for (( CORE=0; CORE<$PAR; CORE++ ))
 do
   echo "p inccnf" > $OUT/formula$$-$CORE.icnf
-  cat $LOCAL_CNF | grep -v c >> $OUT/formula$$-$CORE.icnf
-  awk 'NR % '$PAR' == '$CORE'' $OUT/cubes$$ >> $OUT/formula$$-$CORE.icnf
+  cat  $LOCAL_CNF | grep -v c >> $OUT/formula$$-$CORE.icnf
+  awk  'NR % '$PAR' == '$CORE'' $OUT/cubes$$ >> $OUT/formula$$-$CORE.icnf
   $DIR/iglucose/core/iglucose $OUT/formula$$-$CORE.icnf $OUT/output-$CORE.txt -verb=0 &
   PIDS[$CORE]=$!
+  echo "c constructed CNF formula for core "$CORE" on process "$!
   echo ${PIDS[$CORE]} >> $OUT/pids.txt
 done
 
@@ -179,7 +185,7 @@ wait_for_termination() {
   FLAG=1
   while [ "$FLAG" == "1" ]
   do
-    SAT=`cat CnC/summary*.txt | grep "^SAT" | awk '{print $1}' | uniq`
+    SAT=`cat CnC/summary*.txt 2> /dev/null | grep "^SAT" | awk '{print $1}' | uniq`
     if [ "$SAT" == "SAT" ]; then
       echo "SAT" > sat.txt
       echo "c ENDING THE OTHER NODES"; FLAG=0;
@@ -195,7 +201,10 @@ wait_for_termination() {
     if [ "$SUM" == "${AWS_BATCH_JOB_NUM_NODES}" ]; then echo "c DONE: ALL NODE TERMINATED"; FLAG=0; break; fi
     if [ "$FLAG" == "1" ]; then sleep 1; fi
   done
-  cat CnC/summary-*.txt
+  for file in CnC/summary-*.txt;
+  do
+    echo -n $file" "; cat CnC/summary-*.txt;
+  done
 }
 
 case $NODE_TYPE in
