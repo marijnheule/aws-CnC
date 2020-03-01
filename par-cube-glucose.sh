@@ -61,7 +61,14 @@ wait_for_nodes () {
     sleep 1
   done
 
-  $DIR/cadical/build/cadical $CNF -c 100000 -o $OUT/simp.cnf -q
+  $DIR/cadical/build/cadical $CNF -c 100000 -o $OUT/simp.cnf -q > $OUT/simp-result.txt
+  RES=`cat $OUT/simp-result.txt | grep "^s " | awk '{print $2}'`
+  if [ "$RES" == "UNKNOWN" ]; then
+    cat $OUT/simp-result.txt
+    exit $!
+  else
+    log "CaDiCaL simplified the formula"
+  fi
   head -n 1 $OUT/simp.cnf
   $DIR/march_cu/march_cu $OUT/simp.cnf -o $OUT/cubes-$$.txt -d 10 -l ${AWS_BATCH_JOB_NUM_NODES}
 
