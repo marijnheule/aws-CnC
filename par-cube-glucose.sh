@@ -1,6 +1,8 @@
 #!/bin/bash
 
-DEPTH=20
+DEPTH=25
+
+log "c split depth "$DEPTH
 
 if [ -z "$1" ]
 then
@@ -69,7 +71,10 @@ wait_for_nodes () {
   else
     log "CaDiCaL simplified the formula"
   fi
-  head -n 1 $OUT/simp.cnf
+  log "orignial formula"
+  head $CNF | grep "cnf"
+  log "simplified formula"
+  head $OUT/simp.cnf | grep "cnf"
   $DIR/march_cu/march_cu $OUT/simp.cnf -o $OUT/cubes-$$.txt -d 10 -l ${AWS_BATCH_JOB_NUM_NODES}
 
   for (( NODE=0; NODE<${AWS_BATCH_JOB_NUM_NODES}; NODE++ ))
