@@ -1,6 +1,6 @@
 #!/bin/bash
 
-DEPTH=25
+DEPTH=10
 
 log "c split depth "$DEPTH
 
