@@ -3,6 +3,7 @@
 DEPTH=10
 
 UNK=UNKNOWN
+TRUE=1
 
 log "c split depth "$DEPTH
 
@@ -77,11 +78,11 @@ wait_for_nodes () {
   head $OUT/simp.cnf | grep "cnf"
 #  SPLIT=${AWS_BATCH_JOB_NUM_NODES}
   SPLIT=$((${AWS_BATCH_JOB_NUM_NODES} * $PAR))
-  $DIR/march_cu/march_cu $OUT/simp.cnf -o $OUT/cubes-$$.txt -d 10 -l $SPLIT
+  $DIR/march_cu/march_cu $OUT/simp.cnf -o $OUT/cubes-main-$$.txt -d 10 -l $SPLIT
 
   for (( NODE=0; NODE<${AWS_BATCH_JOB_NUM_NODES}; NODE++ ))
   do
-    awk 'NR % '${AWS_BATCH_JOB_NUM_NODES}' == '$NODE'' $OUT/cubes-$$.txt > $OUT/cubes-split-$NODE.txt
+    awk 'NR % '${AWS_BATCH_JOB_NUM_NODES}' == '$NODE'' $OUT/cubes-main-$$.txt > $OUT/cubes-split-$NODE.txt
 #    cat $OUT/cubes-split-$NODE.txt
     log "copying cube file to node "$NODE
     NODE_IP=$(cat $HOST_FILE_PATH-$NODE | awk '{print $1}')
@@ -137,12 +138,6 @@ rm -f $OUT/pids.txt
 touch $OUT/output.txt
 touch $OUT/pids.txt
 
-#LOCAL_CNF=/CnC/node-formula.cnf
-#/CnC/scripts/apply.sh $CNF /CnC/cubes-split-${AWS_BATCH_JOB_NODE_INDEX}.txt 1 > $OUT/cubed.cnf
-#$DIR/cadical/build/cadical $OUT/cubed.cnf -c 100000 -o $LOCAL_CNF -q
-#head -n 1 $LOCAL_CNF
-#$DIR/march_cu/march_cu $LOCAL_CNF -o $OUT/cubes$$ -d $DEPTH
-
 LINES=`wc /CnC/cubes-split-${AWS_BATCH_JOB_NODE_INDEX}.txt | awk '{print $1}'`
 MIN=$(( $PAR < $LINES ? $PAR : $LINES ))
 
@@ -159,15 +154,15 @@ do
   RES=`cat $OUT/simp-result-$CORE.txt | grep -e "SATIS" -e "UNKNOWN" | awk '{print $2}'`
   if [ "$RES" == "$UNK" ]; then
     $DIR/march_cu/march_cu $OUT/simp-$CORE.cnf -o $OUT/cubes-$CORE.txt -d $DEPTH
-    /CnC/scripts/prefix.sh /CnC/cubes-split-${AWS_BATCH_JOB_NODE_INDEX}.txt $CORE $OUT/cubes-$CORE.txt >> cubes$$
+    /CnC/scripts/prefix.sh /CnC/cubes-split-${AWS_BATCH_JOB_NODE_INDEX}.txt $CORE $OUT/cubes-$CORE.txt >> $OUT/cubes-merge-$$.txt
   else
     log "simpified subformula solved"
-    head -n $CORE /CnC/cubes-split-${AWS_BATCH_JOB_NODE_INDEX}.txt | tail -n 1 >> cubes$$
+    head -n $CORE /CnC/cubes-split-${AWS_BATCH_JOB_NODE_INDEX}.txt | tail -n 1 >> $OUT/cubes-merge-$$.txt
   fi
   rm $OUT/node-$CORE.cnf $OUT/simp-result-$CORE.txt $OUT/simp-$CORE.cnf
 done
 
-cat cubes$$
+cat $OUT/cubes-merge-$$.txt
 
 kill_threads() {
   log "c killing the remaining open threads"
@@ -197,7 +192,7 @@ do
   echo "p inccnf" > $OUT/formula$$-$CORE.icnf
   cat  $CNF | grep -v c >> $OUT/formula$$-$CORE.icnf
 #  cat  $LOCAL_CNF | grep -v c >> $OUT/formula$$-$CORE.icnf
-  awk  'NR % '$PAR' == '$CORE'' $OUT/cubes$$ >> $OUT/formula$$-$CORE.icnf
+  awk  'NR % '$PAR' == '$CORE'' $OUT/cubes-merge-$$.txt >> $OUT/formula$$-$CORE.icnf
   $DIR/iglucose/core/iglucose $OUT/formula$$-$CORE.icnf $OUT/output-$CORE.txt -verb=0 &
   PIDS[$CORE]=$!
   echo "c constructed CNF formula for core "$CORE" on process "$!
@@ -207,7 +202,7 @@ done
 # wait for all pids
 for (( CORE=0; CORE<$PAR; CORE++ )) do wait ${PIDS[$CORE]}; done
 
-rm $OUT/cubes$$
+rm $OUT/cubes-merge-$$.txt
 for (( CORE=0; CORE<$PAR; CORE++ ))
 do
   rm $OUT/formula$$-$CORE.icnf
