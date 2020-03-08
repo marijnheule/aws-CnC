@@ -156,7 +156,6 @@ done
 
 # wait for all pids
 for (( CORE=1; CORE<=$MIN; CORE++ )) do wait ${PIDS[$CORE]}; done
-done
 
 ##### partition all simplied subformulas ######
 
