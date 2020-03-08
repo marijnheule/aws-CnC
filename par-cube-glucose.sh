@@ -145,18 +145,20 @@ log "local cubes "$LINES" "$MIN
 chmod 644 /CnC/cubes-split-${AWS_BATCH_JOB_NODE_INDEX}.txt
 cat /CnC/cubes-split-${AWS_BATCH_JOB_NODE_INDEX}.txt
 
-# simplify all subformulas in parallel
+##### simplify all subformulas in parallel ######
 for (( CORE=1; CORE<=$MIN; CORE++ ))
 do
   /CnC/scripts/apply.sh $CNF /CnC/cubes-split-${AWS_BATCH_JOB_NODE_INDEX}.txt $CORE > $OUT/node-$CORE.cnf
   $DIR/cadical/build/cadical $OUT/node-$CORE.cnf -c 100000 -o $OUT/simp-$CORE.cnf -q > $OUT/simp-result-$CORE.txt &
   PIDS[$CORE]=$!
-  echo "c simplifying subformula on core "$CORE" using process "$!
+  echo "c simplifying subformula "$CORE" on process "$!
 done
 
 # wait for all pids
-for (( CORE=0; CORE<$MIN; CORE++ )) do wait ${PIDS[$CORE]}; done
+for (( CORE=1; CORE<=$MIN; CORE++ )) do wait ${PIDS[$CORE]}; done
 done
+
+##### partition all simplied subformulas ######
 
 # still sequential, must be parallelized
 for (( CORE=1; CORE<=$MIN; CORE++ ))
@@ -172,6 +174,9 @@ do
   fi
   rm $OUT/node-$CORE.cnf $OUT/simp-result-$CORE.txt $OUT/simp-$CORE.cnf
 done
+
+
+##### merge all cubes #####
 
 NCBS=`wc $OUT/cubes-merge-$$.txt | awk '{print $1}'`
 log "total number of local cubes "$NCBS
