@@ -145,12 +145,23 @@ log "local cubes "$LINES" "$MIN
 chmod 644 /CnC/cubes-split-${AWS_BATCH_JOB_NODE_INDEX}.txt
 cat /CnC/cubes-split-${AWS_BATCH_JOB_NODE_INDEX}.txt
 
-# still sequential, must be parallelized
+# simplify all subformulas in parallel
 for (( CORE=1; CORE<=$MIN; CORE++ ))
 do
   /CnC/scripts/apply.sh $CNF /CnC/cubes-split-${AWS_BATCH_JOB_NODE_INDEX}.txt $CORE > $OUT/node-$CORE.cnf
-  $DIR/cadical/build/cadical $OUT/node-$CORE.cnf -c 100000 -o $OUT/simp-$CORE.cnf -q > $OUT/simp-result-$CORE.txt
-  echo -n "c subformula result: "; cat $OUT/simp-result-$CORE.txt
+  $DIR/cadical/build/cadical $OUT/node-$CORE.cnf -c 100000 -o $OUT/simp-$CORE.cnf -q > $OUT/simp-result-$CORE.txt &
+  PIDS[$CORE]=$!
+  echo "c simplifying subformula on core "$CORE" using process "$!
+done
+
+# wait for all pids
+for (( CORE=0; CORE<$MIN; CORE++ )) do wait ${PIDS[$CORE]}; done
+done
+
+# still sequential, must be parallelized
+for (( CORE=1; CORE<=$MIN; CORE++ ))
+do
+  echo -n "c subformula result on core "$CORE": "; cat $OUT/simp-result-$CORE.txt
   RES=`cat $OUT/simp-result-$CORE.txt | grep -e "SATIS" -e "UNKNOWN" | awk '{print $2}'`
   if [ "$RES" == "$UNK" ]; then
     $DIR/march_cu/march_cu $OUT/simp-$CORE.cnf -o $OUT/cubes-$CORE.txt -d $DEPTH
