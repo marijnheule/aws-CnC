@@ -128,10 +128,7 @@ do
   echo "c waiting for cube file to appear, sleep 1 second"
   sleep 1
 done
-echo "Okay lets run!"
-
-chmod 644 /CnC/cubes-split-${AWS_BATCH_JOB_NODE_INDEX}.txt
-cat /CnC/cubes-split-${AWS_BATCH_JOB_NODE_INDEX}.txt
+echo "Okay let's run!"
 
 rm -f $OUT/output*.txt
 rm -f $OUT/pids.txt
@@ -148,6 +145,7 @@ LINES=`wc /CnC/cubes-split-${AWS_BATCH_JOB_NODE_INDEX}.txt | awk '{print $1}'`
 MIN=$(( $PAR < $LINES ? $PAR : $LINES ))
 
 log "local cubes "$LINES" "$MIN
+chmod 644 /CnC/cubes-split-${AWS_BATCH_JOB_NODE_INDEX}.txt
 cat /CnC/cubes-split-${AWS_BATCH_JOB_NODE_INDEX}.txt
 
 # still sequential, must be parallelized
@@ -159,7 +157,7 @@ do
   if [ "$RES" == "UNKNOWN" ]; then
     head -n $CORE /CnC/cubes-split-${AWS_BATCH_JOB_NODE_INDEX}.txt >> cubes$$
   else
-    $DIR/march_cu/march_cu $OUT/simp-result-$CORE.cnf -o $OUT/cubes-$CORE.txt -d $DEPTH
+    $DIR/march_cu/march_cu $OUT/simp-$CORE.cnf -o $OUT/cubes-$CORE.txt -d $DEPTH
     /CnC/scripts/prefix.sh /CnC/cubes-split-${AWS_BATCH_JOB_NODE_INDEX}.txt $CORE $OUT/cubes-$CORE.txt >> cubes$$
   fi
   rm $OUT/node-$CORE.cnf $OUT/simp-result-$CORE.txt $OUT/simp-$CORE.cnf
