@@ -150,7 +150,7 @@ for (( CORE=1; CORE<=$MIN; CORE++ ))
 do
   /CnC/scripts/apply.sh $CNF /CnC/cubes-split-${AWS_BATCH_JOB_NODE_INDEX}.txt $CORE > $OUT/node-$CORE.cnf
   $DIR/cadical/build/cadical $OUT/node-$CORE.cnf -c 100000 -o $OUT/simp-$CORE.cnf -q > $OUT/simp-result-$CORE.txt
-  cat $OUT/simp-result-$CORE.txt
+  echo -n "c subformula result: "; cat $OUT/simp-result-$CORE.txt
   RES=`cat $OUT/simp-result-$CORE.txt | grep -e "SATIS" -e "UNKNOWN" | awk '{print $2}'`
   if [ "$RES" == "$UNK" ]; then
     $DIR/march_cu/march_cu $OUT/simp-$CORE.cnf -o $OUT/cubes-$CORE.txt -d $DEPTH
@@ -162,7 +162,8 @@ do
   rm $OUT/node-$CORE.cnf $OUT/simp-result-$CORE.txt $OUT/simp-$CORE.cnf
 done
 
-cat $OUT/cubes-merge-$$.txt
+NCBS=`wc $OUT/cubes-merge-$$.txt | awk '{print $1}'`
+log "total number of local cubes "$NCBS
 
 kill_threads() {
   log "c killing the remaining open threads"
