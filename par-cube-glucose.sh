@@ -160,7 +160,7 @@ do
     head -n $CORE /CnC/cubes-split-${AWS_BATCH_JOB_NODE_INDEX}.txt >> cubes$$
   else
     $DIR/march_cu/march_cu $OUT/simp-result-$CORE.cnf -o $OUT/cubes-$CORE.txt -d $DEPTH
-    /CNC/scripts/prefix.sh /CnC/cubes-split-${AWS_BATCH_JOB_NODE_INDEX}.txt $CORE $OUT/cubes-$CORE.txt >> cubes$$
+    /CnC/scripts/prefix.sh /CnC/cubes-split-${AWS_BATCH_JOB_NODE_INDEX}.txt $CORE $OUT/cubes-$CORE.txt >> cubes$$
   fi
   rm $OUT/node-$CORE.cnf $OUT/simp-result-$CORE.txt $OUT/simp-$CORE.cnf
 done
