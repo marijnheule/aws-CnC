@@ -1,6 +1,6 @@
 #!/bin/bash
 
-DEPTH=10
+DEPTH=25
 
 UNK=UNKNOWN
 TRUE=1
@@ -176,7 +176,6 @@ done
 for (( CORE=1; CORE<=$JOBS; CORE++ )) do wait ${PIDS[$CORE]}; done
 
 ##### merge all cubes and clean up #####
-
 for (( CORE=1; CORE<=$MIN; CORE++ ))
 do
   /CnC/scripts/prefix.sh /CnC/cubes-split-${AWS_BATCH_JOB_NODE_INDEX}.txt $CORE $OUT/cubes-$CORE.txt >> $OUT/cubes-merge-$$.txt
@@ -185,6 +184,8 @@ done
 
 NCBS=`wc $OUT/cubes-merge-$$.txt | awk '{print $1}'`
 log "total number of local cubes "$NCBS
+
+
 
 kill_threads() {
   log "c killing the remaining open threads"
