@@ -2,6 +2,8 @@
 
 DEPTH=10
 
+UNK="UNKNOWN"
+
 log "c split depth "$DEPTH
 
 if [ -z "$1" ]
@@ -155,7 +157,7 @@ do
   $DIR/cadical/build/cadical $OUT/node-$CORE.cnf -c 100000 -o $OUT/simp-$CORE.cnf -q > $OUT/simp-result-$CORE.txt
   cat $OUT/simp-result-$CORE.txt
   RES=`cat $OUT/simp-result-$CORE.txt | grep "^s " | awk '{print $2}'`
-  if [ $RES == "UNKNOWN" ]; then
+  if [ "$RES" == "$UNK" ]; then
     $DIR/march_cu/march_cu $OUT/simp-$CORE.cnf -o $OUT/cubes-$CORE.txt -d $DEPTH
     /CnC/scripts/prefix.sh /CnC/cubes-split-${AWS_BATCH_JOB_NODE_INDEX}.txt $CORE $OUT/cubes-$CORE.txt >> cubes$$
   else
