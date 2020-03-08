@@ -155,12 +155,12 @@ do
   $DIR/cadical/build/cadical $OUT/node-$CORE.cnf -c 100000 -o $OUT/simp-$CORE.cnf -q > $OUT/simp-result-$CORE.txt
   cat $OUT/simp-result-$CORE.txt
   RES=`cat $OUT/simp-result-$CORE.txt | grep "^s " | awk '{print $2}'`
-  if [ "$RES" == "UNKNOWN" ]; then
-    log "simpified subformula solved"
-    head -n $CORE /CnC/cubes-split-${AWS_BATCH_JOB_NODE_INDEX}.txt | tail -n 1 >> cubes$$
-  else
+  if [ $RES == "UNKNOWN" ]; then
     $DIR/march_cu/march_cu $OUT/simp-$CORE.cnf -o $OUT/cubes-$CORE.txt -d $DEPTH
     /CnC/scripts/prefix.sh /CnC/cubes-split-${AWS_BATCH_JOB_NODE_INDEX}.txt $CORE $OUT/cubes-$CORE.txt >> cubes$$
+  else
+    log "simpified subformula solved"
+    head -n $CORE /CnC/cubes-split-${AWS_BATCH_JOB_NODE_INDEX}.txt | tail -n 1 >> cubes$$
   fi
   rm $OUT/node-$CORE.cnf $OUT/simp-result-$CORE.txt $OUT/simp-$CORE.cnf
 done
