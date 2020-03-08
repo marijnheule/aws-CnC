@@ -162,20 +162,27 @@ for (( CORE=1; CORE<=$MIN; CORE++ )) do wait ${PIDS[$CORE]}; done
 # still sequential, must be parallelized
 for (( CORE=1; CORE<=$MIN; CORE++ ))
 do
+  echo "a 0" > $OUT/cubes-$CORE.txt
   echo -n "c subformula result on core "$CORE": "; cat $OUT/simp-result-$CORE.txt
   RES=`cat $OUT/simp-result-$CORE.txt | grep -e "SATIS" -e "UNKNOWN" | awk '{print $2}'`
   if [ "$RES" == "$UNK" ]; then
     $DIR/march_cu/march_cu $OUT/simp-$CORE.cnf -o $OUT/cubes-$CORE.txt -d $DEPTH
-    /CnC/scripts/prefix.sh /CnC/cubes-split-${AWS_BATCH_JOB_NODE_INDEX}.txt $CORE $OUT/cubes-$CORE.txt >> $OUT/cubes-merge-$$.txt
-  else
-    log "simpified subformula solved"
-    head -n $CORE /CnC/cubes-split-${AWS_BATCH_JOB_NODE_INDEX}.txt | tail -n 1 >> $OUT/cubes-merge-$$.txt
+#    /CnC/scripts/prefix.sh /CnC/cubes-split-${AWS_BATCH_JOB_NODE_INDEX}.txt $CORE $OUT/cubes-$CORE.txt >> $OUT/cubes-merge-$$.txt
+#  else
+#    log "simpified subformula solved"
+#    head -n $CORE /CnC/cubes-split-${AWS_BATCH_JOB_NODE_INDEX}.txt | tail -n 1 >> $OUT/cubes-merge-$$.txt
   fi
-  rm $OUT/node-$CORE.cnf $OUT/simp-result-$CORE.txt $OUT/simp-$CORE.cnf
+#  rm $OUT/node-$CORE.cnf $OUT/simp-result-$CORE.txt $OUT/simp-$CORE.cnf
 done
 
 
-##### merge all cubes #####
+##### merge all cubes and clean up #####
+
+for (( CORE=1; CORE<=$MIN; CORE++ ))
+do
+  /CnC/scripts/prefix.sh /CnC/cubes-split-${AWS_BATCH_JOB_NODE_INDEX}.txt $CORE $OUT/cubes-$CORE.txt >> $OUT/cubes-merge-$$.txt
+  rm $OUT/node-$CORE.cnf $OUT/simp-result-$CORE.txt $OUT/simp-$CORE.cnf
+done
 
 NCBS=`wc $OUT/cubes-merge-$$.txt | awk '{print $1}'`
 log "total number of local cubes "$NCBS
