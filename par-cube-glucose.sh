@@ -80,7 +80,8 @@ wait_for_nodes () {
   for (( NODE=0; NODE<${AWS_BATCH_JOB_NUM_NODES}; NODE++ ))
   do
     awk 'NR % '${AWS_BATCH_JOB_NUM_NODES}' == '$NODE'' $OUT/cubes-$$.txt > $OUT/cubes-split-$NODE.txt
-    cat $OUT/cubes-split-$NODE.txt
+#    cat $OUT/cubes-split-$NODE.txt
+    log "copying cube file to node "$NODE
     NODE_IP=$(cat $HOST_FILE_PATH-$NODE | awk '{print $1}')
     echo "c copying cubes-split-"$NODE".txt to "$NODE_IP
     scp $OUT/cubes-split-$NODE.txt $NODE_IP:/CnC/cubes-split-$NODE.txt
@@ -153,15 +154,15 @@ cat /CnC/cubes-split-${AWS_BATCH_JOB_NODE_INDEX}.txt
 for (( CORE=1; CORE<=$MIN; CORE++ ))
 do
   /CnC/scripts/apply.sh $CNF /CnC/cubes-split-${AWS_BATCH_JOB_NODE_INDEX}.txt $CORE > $OUT/node-$CORE.cnf
-  $DIR/cadical/build/cadical $OUT/node-$CORE.cnf -c 100000 -o $OUT/simp-$CORE.cnf -q > $OUT/simp-results-$CORE.txt
+  $DIR/cadical/build/cadical $OUT/node-$CORE.cnf -c 100000 -o $OUT/simp-$CORE.cnf -q > $OUT/simp-result-$CORE.txt
   RES=`cat $OUT/simp-result-$CORE.txt | grep "^s " | awk '{print $2}'`
   if [ "$RES" == "UNKNOWN" ]; then
     head -n $CORE /CnC/cubes-split-${AWS_BATCH_JOB_NODE_INDEX}.txt >> cubes$$
   else
-    $DIR/march_cu/march_cu $OUT/simp-$CORE.cnf -o $OUT/cubes-$CORE.txt -d $DEPTH
+    $DIR/march_cu/march_cu $OUT/simp-result-$CORE.cnf -o $OUT/cubes-$CORE.txt -d $DEPTH
     cat $OUT/cubes-$CORE.txt >> cubes$$
   fi
-  rm $OUT/node-$CORE.cnf $OUT/simp-results-$CORE.txt $OUT/simp-$CORE.cnf
+  rm $OUT/node-$CORE.cnf $OUT/simp-result-$CORE.txt $OUT/simp-$CORE.cnf
 done
 
 
