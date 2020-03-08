@@ -53,8 +53,6 @@ wait_for_nodes () {
   LINES=$(ls -dq /tmp/hostfile* | wc -l)
   while [ "${AWS_BATCH_JOB_NUM_NODES}" -gt "${LINES}" ]
   do
-#    cat $HOST_FILE_PATH-0
-
     LINES=$(ls -dq /tmp/hostfile* | wc -l)
     if [ "$OLD" -ne "$LINES" ]; then
       log "c $LINES out of $AWS_BATCH_JOB_NUM_NODES nodes joined";
@@ -75,7 +73,9 @@ wait_for_nodes () {
   head $CNF | grep "cnf"
   log "simplified formula"
   head $OUT/simp.cnf | grep "cnf"
-  $DIR/march_cu/march_cu $OUT/simp.cnf -o $OUT/cubes-$$.txt -d 10 -l ${AWS_BATCH_JOB_NUM_NODES}
+#  SPLIT=${AWS_BATCH_JOB_NUM_NODES}
+  SPLIT=$((${AWS_BATCH_JOB_NUM_NODES} * $PAR))
+  $DIR/march_cu/march_cu $OUT/simp.cnf -o $OUT/cubes-$$.txt -d 10 -l $SPLIT
 
   for (( NODE=0; NODE<${AWS_BATCH_JOB_NUM_NODES}; NODE++ ))
   do
@@ -137,11 +137,33 @@ rm -f $OUT/pids.txt
 touch $OUT/output.txt
 touch $OUT/pids.txt
 
-LOCAL_CNF=/CnC/local-formula.cnf
-/CnC/scripts/apply.sh $CNF /CnC/cubes-split-${AWS_BATCH_JOB_NODE_INDEX}.txt 1 > $OUT/cubed.cnf
-$DIR/cadical/build/cadical $OUT/cubed.cnf -c 100000 -o $LOCAL_CNF -q
-head -n 1 $LOCAL_CNF
-$DIR/march_cu/march_cu $LOCAL_CNF -o $OUT/cubes$$ -d $DEPTH
+#LOCAL_CNF=/CnC/node-formula.cnf
+#/CnC/scripts/apply.sh $CNF /CnC/cubes-split-${AWS_BATCH_JOB_NODE_INDEX}.txt 1 > $OUT/cubed.cnf
+#$DIR/cadical/build/cadical $OUT/cubed.cnf -c 100000 -o $LOCAL_CNF -q
+#head -n 1 $LOCAL_CNF
+#$DIR/march_cu/march_cu $LOCAL_CNF -o $OUT/cubes$$ -d $DEPTH
+
+LINES=`wc /CnC/cubes-split-${AWS_BATCH_JOB_NODE_INDEX}.txt | awk '{print $1}'`
+MIN=$(( $PAR < $LINES ? $PAR : $LINES ))
+
+log "local cubes "$LINES" "$MIN
+cat /CnC/cubes-split-${AWS_BATCH_JOB_NODE_INDEX}.txt
+
+# still sequential, must be parallelized
+for (( CORE=1; CORE<=$MIN; CORE++ ))
+do
+  /CnC/scripts/apply.sh $CNF /CnC/cubes-split-${AWS_BATCH_JOB_NODE_INDEX}.txt $CORE > $OUT/node-$CORE.cnf
+  $DIR/cadical/build/cadical $OUT/node-$CORE.cnf -c 100000 -o $OUT/simp-$CORE.cnf -q > $OUT/simp-results-$CORE.txt
+  RES=`cat $OUT/simp-result-$CORE.txt | grep "^s " | awk '{print $2}'`
+  if [ "$RES" == "UNKNOWN" ]; then
+    head -n $CORE /CnC/cubes-split-${AWS_BATCH_JOB_NODE_INDEX}.txt >> cubes$$
+  else
+    $DIR/march_cu/march_cu $OUT/simp-$CORE.cnf -o $OUT/cubes-$CORE.txt -d $DEPTH
+    cat $OUT/cubes-$CORE.txt >> cubes$$
+  fi
+  rm $OUT/node-$CORE.cnf $OUT/simp-results-$CORE.txt $OUT/simp-$CORE.cnf
+done
+
 
 kill_threads() {
   log "c killing the remaining open threads"
@@ -169,7 +191,8 @@ done &
 for (( CORE=0; CORE<$PAR; CORE++ ))
 do
   echo "p inccnf" > $OUT/formula$$-$CORE.icnf
-  cat  $LOCAL_CNF | grep -v c >> $OUT/formula$$-$CORE.icnf
+  cat  $CNF | grep -v c >> $OUT/formula$$-$CORE.icnf
+#  cat  $LOCAL_CNF | grep -v c >> $OUT/formula$$-$CORE.icnf
   awk  'NR % '$PAR' == '$CORE'' $OUT/cubes$$ >> $OUT/formula$$-$CORE.icnf
   $DIR/iglucose/core/iglucose $OUT/formula$$-$CORE.icnf $OUT/output-$CORE.txt -verb=0 &
   PIDS[$CORE]=$!
