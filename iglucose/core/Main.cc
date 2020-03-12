@@ -194,14 +194,14 @@ int main(int argc, char** argv)
           done += pow (0.5, assumptions.size());
 //          printf("c %.2f bound %d (size %d used %d) is %s (%.2f%%)\n", cpuTime(), bound, assumptions.size(), S.conflict.size(),
 //                 ret == l_True ? "SATISFIABLE" : ret == l_False ? "UNSATISFIABLE" : "INDETERMINATE", done);
-
+/*
           printf ("\rc %.2f%% [", done * 100);
           for (int f = 1; f <= 20; f++) {
             if (done * 20.0 < 1.0 * f) printf(" ");
             else printf("="); }
           printf ("] time remaining: %.2f seconds ", cpuTime() / done - cpuTime());
           fflush (stdout);
-
+*/
  	  if ( ret == l_Undef ) break;
  	  next_solve_bound+= inc_bound;
 
