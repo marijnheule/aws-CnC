@@ -32,6 +32,7 @@ RUN apt-get install zlib1g-dev -y
 RUN DEBIAN_FRONTEND=noninteractive apt install -y iproute2 cmake python python-pip build-essential gfortran wget curl
 RUN pip install supervisor awscli
 RUN apt-get install openmpi-bin openmpi-common libopenmpi-dev iputils-ping -y
+RUN apt-get install gawk -y
 
 RUN mkdir /CnC
 ADD scripts/ /CnC/scripts
