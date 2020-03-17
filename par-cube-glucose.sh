@@ -1,6 +1,6 @@
 #!/bin/bash
 
-DEPTH=15
+DEPTH=5
 
 UNK=UNKNOWN
 TRUE=1
