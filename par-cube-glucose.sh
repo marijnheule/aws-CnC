@@ -20,6 +20,9 @@ fi
 # check if input file exists, otherwise terminate
 if [ ! -f "$CNF" ]; then echo "c ERROR formula does not exit"; exit 1; fi
 
+NCLS=`head -n 1000 $CNF | grep "p cnf" | awk '{print $4}'`
+if [ "$NCLS" -gt "1000000" ]; then echo "c WARNING formula has over a million clauses\n"; exit 1; fi
+
 PAR=${NUM_PROCESSES}
 OUT=/tmp
 
@@ -175,7 +178,7 @@ done
 # wait for all pids
 for (( CORE=1; CORE<=$JOBS; CORE++ )) do wait ${PIDS[$CORE]}; done
 
-##### merge all cubes and clean up #####
+ ##### merge all cubes and clean up #####
 for (( CORE=1; CORE<=$MIN; CORE++ ))
 do
   /CnC/scripts/prefix.sh /CnC/cubes-split-${AWS_BATCH_JOB_NODE_INDEX}.txt $CORE $OUT/cubes-$CORE.txt >> $OUT/cubes-merge-$$.txt
